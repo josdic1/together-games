@@ -1,102 +1,186 @@
 .spot-difference-game {
-  width: min(94vw, 1000px);
+  width: min(100%, 1120px);
   margin: 0 auto;
-  padding: 32px 20px 48px;
+  padding: 56px 60px 72px;
   text-align: center;
+}
+
+.spot-difference-home {
+  display: inline-flex;
+  align-items: center;
+
+  margin-bottom: 28px;
+  padding: 12px 22px;
+
+  border: 5px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  box-shadow: var(--paper-shadow);
+
+  text-decoration: none;
+}
+
+.spot-difference-home:active {
+  transform: translateY(6px);
+  box-shadow: none;
 }
 
 .spot-difference-header h1 {
   margin: 0;
-  font-size: clamp(2.5rem, 7vw, 4rem);
+
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
 }
 
 .spot-difference-header p {
-  margin: 12px 0 28px;
-  font-size: 1.2rem;
-  font-weight: 700;
+  width: fit-content;
+  margin: 22px auto 32px;
+  padding: 12px 22px;
+
+  border: 5px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--leaf);
+  color: var(--ink);
+
+  font-size: 1.15rem;
 }
 
 .spot-difference-scenes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 40px;
 }
 
 .spot-difference-scene {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 18px;
 
-  padding: 16px;
-  border: 3px solid #111;
-  border-radius: 18px;
-  background: white;
+  padding: 24px;
+
+  border: 5px solid var(--ink);
+  border-radius: 32px;
+
+  background: var(--paper);
+
+  box-shadow: var(--paper-shadow);
 }
 
 .spot-difference-item {
+  position: relative;
   aspect-ratio: 1;
-  border: 2px solid transparent;
-  border-radius: 14px;
-  background: #f4f1e8;
 
-  font-size: clamp(2.5rem, 7vw, 5rem);
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 5px solid var(--ink);
+  border-radius: 28px;
+
+  background: var(--grape);
+  color: var(--ink);
+
+  box-shadow: var(--paper-shadow);
+
+  font-size: clamp(2.5rem, 6vw, 5rem);
 
   cursor: pointer;
-  touch-action: manipulation;
+}
+
+.spot-difference-item:nth-child(3n + 2) {
+  background: var(--leaf);
+}
+
+.spot-difference-item:nth-child(3n) {
+  background: var(--sun);
 }
 
 .spot-difference-item:active {
-  transform: scale(0.95);
+  transform: translateY(6px) scale(0.94);
+  box-shadow: none;
 }
 
 .spot-difference-item.found {
-  border-color: #111;
-  outline: 4px solid #f4f1e8;
+  background: var(--paper);
+  transform: rotate(-2deg);
+}
+
+.spot-difference-item.found::after {
+  content: '●';
+
+  position: absolute;
+
+  width: 22px;
+  height: 22px;
+
+  color: var(--tomato);
+
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 .spot-difference-complete {
-  margin-top: 24px;
+  margin-top: 40px;
+  padding: 32px;
+
+  border: 5px solid var(--ink);
+  border-radius: 32px;
+
+  background: var(--sun);
+
+  box-shadow: var(--paper-shadow);
 }
 
 .spot-difference-complete h2 {
   margin: 0;
-  font-size: 2rem;
+
+  font-size: clamp(2rem, 5vw, 3.5rem);
 }
 
 .spot-difference-reset {
-  margin-top: 24px;
-  padding: 10px 18px;
+  margin-top: 28px;
+  padding: 14px 24px;
 
-  border: 0;
-  background: transparent;
-  text-decoration: underline;
+  border: 5px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  box-shadow: var(--paper-shadow);
 
   cursor: pointer;
 }
 
-@media (max-width: 700px) {
+.spot-difference-reset:active {
+  transform: translateY(6px);
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
   .spot-difference-game {
-    padding: 20px 12px 32px;
+    padding: 36px 20px 48px;
   }
 
   .spot-difference-scenes {
-    gap: 8px;
+    gap: 14px;
   }
 
   .spot-difference-scene {
-    gap: 5px;
-    padding: 8px;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 24px;
   }
-}
 
-.spot-difference-home {
-  display: inline-block;
-  margin-bottom: 20px;
-  color: inherit;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.spot-difference-home:hover {
-  text-decoration: underline;
+  .spot-difference-item {
+  position: relative;
+    border-width: 4px;
+    border-radius: 18px;
+  }
 }
