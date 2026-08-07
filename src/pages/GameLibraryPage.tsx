@@ -1,7 +1,16 @@
 import { Link } from 'react-router-dom'
 import './GameLibraryPage.css'
 
-const games = [
+type Game = {
+  id: string
+  title: string
+  to: string
+  color: 'tomato' | 'sea' | 'sun'
+  image?: string
+  art?: 'cake' | 'parker' | 'unicorn' | 'bug' | 'floor'
+}
+
+const games: Game[] = [
   {
     id: 'memory',
     title: 'Memory',
@@ -23,7 +32,129 @@ const games = [
     color: 'sun',
     image: '/characters/roy.png',
   },
+  {
+    id: 'cake-drop',
+    title: 'Cake Drop',
+    to: '/games/cake-drop',
+    color: 'tomato',
+    art: 'cake',
+  },
+  {
+    id: 'parker',
+    title: 'Parker',
+    to: '/games/parker',
+    color: 'sea',
+    art: 'parker',
+  },
+  {
+    id: 'find-unicorn',
+    title: 'Find Unicorn',
+    to: '/games/find-the-unicorn',
+    color: 'sun',
+    art: 'unicorn',
+  },
+  {
+    id: 'bug-jump',
+    title: 'Bug Jump',
+    to: '/games/bug-jump',
+    color: 'tomato',
+    art: 'bug',
+  },
+  {
+    id: 'find-floor',
+    title: 'Find the Floor',
+    to: '/games/find-the-floor',
+    color: 'sea',
+    art: 'floor',
+  },
 ]
+
+function GameArt({ game }: { game: Game }) {
+  if (game.image) {
+    return (
+      <img
+        src={game.image}
+        alt=""
+        className="paper-zoo-game-card__character-image"
+        draggable={false}
+      />
+    )
+  }
+
+  if (game.art === 'cake') {
+    return (
+      <div className="library-cake" aria-hidden="true">
+        <span className="library-cake__cherry" />
+        <span className="library-cake__layer library-cake__layer--one" />
+        <span className="library-cake__layer library-cake__layer--two" />
+        <span className="library-cake__layer library-cake__layer--three" />
+        <span className="library-cake__plate" />
+      </div>
+    )
+  }
+
+  if (game.art === 'parker') {
+    return (
+      <div className="library-parker" aria-hidden="true">
+        <span className="library-parker__garage">
+          <span className="library-parker__window library-parker__window--one" />
+          <span className="library-parker__window library-parker__window--two" />
+          <span className="library-parker__door" />
+        </span>
+
+        <span className="library-parker__car">
+          <span className="library-parker__glass" />
+        </span>
+      </div>
+    )
+  }
+
+  if (game.art === 'unicorn') {
+    return (
+      <div className="library-unicorn" aria-hidden="true">
+        <span className="library-unicorn__ear library-unicorn__ear--left" />
+        <span className="library-unicorn__ear library-unicorn__ear--right" />
+        <span className="library-unicorn__horn" />
+
+        <span className="library-unicorn__head">
+          <span className="library-unicorn__eye library-unicorn__eye--left" />
+          <span className="library-unicorn__eye library-unicorn__eye--right" />
+          <span className="library-unicorn__smile" />
+        </span>
+      </div>
+    )
+  }
+
+  if (game.art === 'bug') {
+    return (
+      <div className="library-bug" aria-hidden="true">
+        <span className="library-bug__antenna library-bug__antenna--left" />
+        <span className="library-bug__antenna library-bug__antenna--right" />
+
+        <span className="library-bug__body">
+          <span className="library-bug__eye library-bug__eye--left" />
+          <span className="library-bug__eye library-bug__eye--right" />
+        </span>
+
+        <span className="library-bug__jump">↑</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="library-floor" aria-hidden="true">
+      <span className="library-floor__building">
+        <span className="library-floor__level" />
+        <span className="library-floor__level" />
+        <span className="library-floor__level" />
+
+        <span className="library-floor__shaft">
+          <span className="library-floor__car" />
+        </span>
+      </span>
+    </div>
+  )
+}
 
 export default function GameLibraryPage() {
   return (
@@ -44,12 +175,7 @@ export default function GameLibraryPage() {
             className={`paper-zoo-game-card paper-zoo-game-card--${game.color}`}
           >
             <div className="paper-zoo-game-card__art">
-              <img
-                src={game.image}
-                alt=""
-                className="paper-zoo-game-card__character-image"
-                draggable={false}
-              />
+              <GameArt game={game} />
             </div>
 
             <div className="paper-zoo-game-card__footer">

@@ -1,0 +1,556 @@
+.parker-game {
+  width: min(100%, 960px);
+  height: 100dvh;
+  max-height: 100dvh;
+
+  margin: 0 auto;
+  padding: 12px 28px 16px;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    auto
+    auto
+    minmax(0, 1fr)
+    auto
+    auto;
+
+  gap: 10px;
+
+  overflow: hidden;
+}
+
+/* ── TOP ───────────────────────────────────────── */
+
+.parker-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.parker-topbar h1 {
+  margin: 0;
+
+  font-size: clamp(2.6rem, 5vh, 4rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.parker-home,
+.parker-reset,
+.parker-mode {
+  min-height: 46px;
+  padding: 7px 16px;
+
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.parker-home {
+  justify-self: start;
+}
+
+.parker-reset {
+  justify-self: end;
+}
+
+.parker-home:active,
+.parker-reset:active,
+.parker-mode:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* ── PLAYERS / SCORE ───────────────────────────── */
+
+.parker-hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.parker-player {
+  min-height: 64px;
+  padding: 9px 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  border: 4px solid var(--ink);
+  border-radius: 22px;
+
+  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+
+  transition:
+    transform 140ms cubic-bezier(.2, 1.6, .4, 1),
+    opacity 140ms linear;
+}
+
+.parker-player--one {
+  background: var(--tomato);
+}
+
+.parker-player--two {
+  background: var(--sea);
+}
+
+.parker-player:not(.is-active) {
+  opacity: 0.4;
+  transform: scale(0.95);
+}
+
+.parker-player.is-active {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.parker-player span {
+  font-size: 1rem;
+}
+
+.parker-player strong {
+  padding: 5px 10px;
+
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--paper);
+
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.parker-stats {
+  display: flex;
+  gap: 7px;
+}
+
+.parker-stats span {
+  min-width: 72px;
+  padding: 7px 10px;
+
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+
+  background: var(--paper);
+
+  text-align: center;
+  font-size: 0.72rem;
+}
+
+.parker-stats strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* ── STATUS ────────────────────────────────────── */
+
+.parker-status {
+  width: fit-content;
+  max-width: 100%;
+
+  margin: 0 auto;
+  padding: 6px 16px;
+
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--sun);
+  color: var(--ink);
+
+  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.parker-status--warn {
+  background: var(--tomato);
+}
+
+/* ── STAGE ─────────────────────────────────────── */
+
+.parker-stage {
+  position: relative;
+
+  min-height: 0;
+
+  overflow: hidden;
+
+  border: 5px solid var(--ink);
+  border-radius: 30px;
+
+  background: var(--paper);
+
+  box-shadow: 0 6px 0 rgb(42 33 24 / 15%);
+}
+
+/* ── GARAGE ────────────────────────────────────── */
+
+.parker-garage {
+  position: absolute;
+
+  border: 5px solid var(--ink);
+  border-radius: 28px 28px 0 0;
+
+  background: var(--sea);
+
+  box-shadow: 0 5px 0 rgb(42 33 24 / 12%);
+}
+
+.parker-windows {
+  height: 32%;
+
+  padding: 12px 8% 0;
+
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5%;
+}
+
+.parker-window {
+  min-width: 0;
+
+  border: 4px solid var(--ink);
+  border-radius: 8px;
+
+  background: var(--paper);
+}
+
+.parker-window--lit {
+  background: var(--sun);
+}
+
+/* doorway */
+
+.parker-opening {
+  position: absolute;
+  left: 50%;
+
+  border: 5px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+
+  background: var(--paper);
+
+  transform: translateX(-50%);
+}
+
+/* ── ROAD ──────────────────────────────────────── */
+
+.parker-guide {
+  position: absolute;
+  left: 50%;
+
+  width: 0;
+
+  border-left: 5px dashed rgb(42 33 24 / 20%);
+
+  transform: translateX(-50%);
+}
+
+.parker-road {
+  position: absolute;
+  left: 0;
+  right: 0;
+
+  height: 5px;
+
+  background: var(--ink);
+}
+
+/* little paper road shoulders */
+
+.parker-stage::before,
+.parker-stage::after {
+  content: '';
+
+  position: absolute;
+  bottom: 5%;
+  z-index: 0;
+
+  width: 22%;
+  height: 9%;
+
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--sun);
+}
+
+.parker-stage::before {
+  left: -7%;
+  transform: rotate(8deg);
+}
+
+.parker-stage::after {
+  right: -7%;
+  transform: rotate(-8deg);
+}
+
+/* ── CAR ───────────────────────────────────────── */
+
+.parker-car {
+  position: absolute;
+  z-index: 3;
+
+  min-width: 54px;
+  min-height: 42px;
+
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+
+  background: var(--tomato);
+
+  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+
+  transform: translateX(-50%);
+}
+
+.parker-lamp {
+  position: absolute;
+  top: 8%;
+
+  width: 15%;
+  aspect-ratio: 1;
+
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+
+  background: var(--sun);
+}
+
+.parker-lamp--left {
+  left: 9%;
+}
+
+.parker-lamp--right {
+  right: 9%;
+}
+
+.parker-windshield {
+  position: absolute;
+  top: 33%;
+  left: 50%;
+
+  width: 58%;
+  height: 30%;
+
+  border: 4px solid var(--ink);
+  border-radius: 8px;
+
+  background: var(--paper);
+
+  transform: translateX(-50%);
+}
+
+.parker-car--bonk {
+  animation:
+    parker-bonk
+    620ms
+    cubic-bezier(.2, .9, .3, 1.2)
+    forwards;
+}
+
+@keyframes parker-bonk {
+  0% {
+    transform:
+      translateX(-50%)
+      translateY(0)
+      rotate(0);
+  }
+
+  18% {
+    transform:
+      translateX(-54%)
+      translateY(-7px)
+      rotate(-6deg);
+  }
+
+  34% {
+    transform:
+      translateX(-46%)
+      translateY(13px)
+      rotate(5deg);
+  }
+
+  50% {
+    transform:
+      translateX(-52%)
+      translateY(9px)
+      rotate(-3deg);
+  }
+
+  100% {
+    transform:
+      translateX(-50%)
+      translateY(110px)
+      rotate(2deg);
+  }
+}
+
+/* ── MAIN ACTION ───────────────────────────────── */
+
+.parker-action {
+  width: 100%;
+  min-height: 66px;
+
+  padding: 9px 24px;
+
+  border: 5px solid var(--ink);
+  border-radius: 999px;
+
+  background: var(--tomato);
+  color: var(--ink);
+
+  box-shadow: 0 5px 0 rgb(42 33 24 / 15%);
+
+  font-size: 1.55rem;
+
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.parker-action:disabled {
+  opacity: 0.45;
+}
+
+.parker-action:active:not(:disabled) {
+  transform: translateY(5px) scale(0.98);
+  box-shadow: none;
+}
+
+/* ── SPEED ─────────────────────────────────────── */
+
+.parker-mode {
+  justify-self: center;
+
+  min-height: 38px;
+  padding: 5px 15px;
+
+  font-size: 0.78rem;
+}
+
+/* ── SHORT VIEWPORT ────────────────────────────── */
+
+@media (max-height: 700px) {
+  .parker-game {
+    padding-top: 7px;
+    padding-bottom: 9px;
+    gap: 6px;
+  }
+
+  .parker-topbar h1 {
+    font-size: 2.25rem;
+  }
+
+  .parker-home,
+  .parker-reset {
+    min-height: 40px;
+    padding: 5px 12px;
+  }
+
+  .parker-player {
+    min-height: 52px;
+    padding: 6px 10px;
+  }
+
+  .parker-status {
+    padding: 4px 12px;
+
+    font-size: 0.78rem;
+  }
+
+  .parker-action {
+    min-height: 56px;
+
+    font-size: 1.3rem;
+  }
+
+  .parker-mode {
+    min-height: 34px;
+  }
+}
+
+/* ── NARROW VIEWPORT ───────────────────────────── */
+
+@media (max-width: 700px) {
+  .parker-game {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .parker-topbar {
+    gap: 8px;
+  }
+
+  .parker-topbar h1 {
+    font-size: clamp(1.9rem, 8vw, 2.7rem);
+  }
+
+  .parker-home,
+  .parker-reset {
+    padding-left: 10px;
+    padding-right: 10px;
+
+    font-size: 0.75rem;
+  }
+
+  .parker-hud {
+    gap: 7px;
+  }
+
+  .parker-player {
+    padding: 6px 8px;
+  }
+
+  .parker-player span {
+    font-size: 0.78rem;
+  }
+
+  .parker-player strong {
+    font-size: 0.62rem;
+  }
+
+  .parker-stats {
+    gap: 4px;
+  }
+
+  .parker-stats span {
+    min-width: 52px;
+    padding: 5px;
+
+    font-size: 0.6rem;
+  }
+
+  .parker-stats strong {
+    font-size: 1rem;
+  }
+
+  .parker-car {
+    min-width: 44px;
+    min-height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parker-car--bonk {
+    animation-duration: 1ms;
+  }
+}
