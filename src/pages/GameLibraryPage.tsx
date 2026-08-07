@@ -7,21 +7,21 @@ const games = [
     title: 'Memory',
     to: '/games/memory',
     color: 'tomato',
-    symbol: '●',
+    image: '/characters/coco.png',
   },
   {
     id: 'copy-me',
     title: 'Copy Me',
     to: '/games/copy-me',
     color: 'sea',
-    symbol: '▲',
+    image: '/characters/copy-wierce.png',
   },
   {
     id: 'spot-it',
     title: 'Spot It!',
     to: '/games/spot-the-difference',
     color: 'sun',
-    symbol: '★',
+    image: '/characters/roy.png',
   },
 ]
 
@@ -43,27 +43,25 @@ export default function GameLibraryPage() {
             to={game.to}
             className={`paper-zoo-game-card paper-zoo-game-card--${game.color}`}
           >
-            <div
-              className="paper-zoo-game-card__character"
-              aria-hidden="true"
-            >
-              <span>{game.symbol}</span>
-
-              <div className="paper-zoo-face">
-                <i />
-                <i />
-                <b />
-              </div>
+            <div className="paper-zoo-game-card__art">
+              <img
+                src={game.image}
+                alt=""
+                className="paper-zoo-game-card__character-image"
+                draggable={false}
+              />
             </div>
 
-            <h2>{game.title}</h2>
+            <div className="paper-zoo-game-card__footer">
+              <h2>{game.title}</h2>
 
-            <span
-              className="paper-zoo-game-card__play"
-              aria-hidden="true"
-            >
-              ▶
-            </span>
+              <span
+                className="paper-zoo-game-card__play"
+                aria-hidden="true"
+              >
+                ▶
+              </span>
+            </div>
           </Link>
         ))}
       </section>

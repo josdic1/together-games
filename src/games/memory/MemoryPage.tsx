@@ -1,41 +1,20 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import {
+  characters,
+  type Character,
+} from '../../content/characters'
 import './MemoryPage.css'
-
-type Character = {
-  id: string
-  name: string
-  emoji: string
-}
 
 type Card = Character & {
   cardId: string
   matched: boolean
 }
 
-const characters: Character[] = [
-  { id: 'whale', name: 'Blue Whale', emoji: '🐋' },
-  { id: 'bear', name: 'Bear', emoji: '🐻' },
-  { id: 'frog', name: 'Frog', emoji: '🐸' },
-  { id: 'fox', name: 'Fox', emoji: '🦊' },
-  { id: 'lion', name: 'Lion', emoji: '🦁' },
-  { id: 'panda', name: 'Panda', emoji: '🐼' },
-  { id: 'rabbit', name: 'Rabbit', emoji: '🐰' },
-  { id: 'monkey', name: 'Monkey', emoji: '🐵' },
-  { id: 'dog', name: 'Dog', emoji: '🐶' },
-  { id: 'cat', name: 'Cat', emoji: '🐱' },
-  { id: 'pig', name: 'Pig', emoji: '🐷' },
-  { id: 'cow', name: 'Cow', emoji: '🐮' },
-  { id: 'mouse', name: 'Mouse', emoji: '🐭' },
-  { id: 'koala', name: 'Koala', emoji: '🐨' },
-  { id: 'tiger', name: 'Tiger', emoji: '🐯' },
-  { id: 'chicken', name: 'Chicken', emoji: '🐔' },
-  { id: 'penguin', name: 'Penguin', emoji: '🐧' },
-  { id: 'octopus', name: 'Octopus', emoji: '🐙' },
-]
+const memoryCharacters = characters.slice(0, 18)
 
 function makeDeck(): Card[] {
-  return [...characters, ...characters]
+  return [...memoryCharacters, ...memoryCharacters]
     .map((character, index) => ({
       ...character,
       cardId: `${character.id}-${index}`,
@@ -113,18 +92,42 @@ export default function MemoryPage() {
 
   return (
     <main className="memory-game">
-      <Link to="/" className="memory-home">
-        ← Games
-      </Link>
+      <div className="memory-topbar">
+        <Link to="/" className="memory-home">
+          ← Games
+        </Link>
 
-      <header>
         <h1>Memory</h1>
-        <p>Player {currentPlayer}'s turn</p>
-      </header>
 
-      <section className="memory-scores">
-        <strong>Player 1: {scores[1]}</strong>
-        <strong>Player 2: {scores[2]}</strong>
+        <button className="memory-reset" onClick={restartGame}>
+          Reset
+        </button>
+      </div>
+
+      <section className="memory-players" aria-label="Players">
+        <div
+          className={`memory-player memory-player--one ${
+            currentPlayer === 1 ? 'is-active' : ''
+          }`}
+        >
+          <span className="memory-player-label">Player 1</span>
+          <strong>{scores[1]}</strong>
+          {currentPlayer === 1 && (
+            <span className="memory-turn-label">Your turn!</span>
+          )}
+        </div>
+
+        <div
+          className={`memory-player memory-player--two ${
+            currentPlayer === 2 ? 'is-active' : ''
+          }`}
+        >
+          <span className="memory-player-label">Player 2</span>
+          <strong>{scores[2]}</strong>
+          {currentPlayer === 2 && (
+            <span className="memory-turn-label">Your turn!</span>
+          )}
+        </div>
       </section>
 
       <section className="memory-board">
@@ -138,7 +141,15 @@ export default function MemoryPage() {
               onClick={() => handleCardClick(index)}
               aria-label={isVisible ? card.name : 'Hidden card'}
             >
-              {isVisible ? card.emoji : '?'}
+              {isVisible ? (
+                <img
+                  src={card.image}
+                  alt=""
+                  draggable={false}
+                />
+              ) : (
+                <span className="memory-card-back">?</span>
+              )}
             </button>
           )
         })}
