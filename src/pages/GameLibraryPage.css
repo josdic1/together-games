@@ -1,0 +1,60 @@
+.game-library {
+  width: min(92vw, 900px);
+  margin: 0 auto;
+  padding: 40px 20px 56px;
+}
+
+.game-library-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.game-library-header h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+.game-library-header p {
+  margin: 12px 0 0;
+  font-size: 1.2rem;
+}
+
+.game-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.game-library-card {
+  min-height: 220px;
+  padding: 24px;
+  border: 2px solid #111;
+  border-radius: 16px;
+  background: white;
+  color: inherit;
+  text-decoration: none;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.game-library-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+}
+
+.game-library-card p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+  .game-library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-library-card {
+    min-height: 150px;
+  }
+}

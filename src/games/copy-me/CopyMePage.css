@@ -1,0 +1,153 @@
+.copy-me-game {
+  width: min(92vw, 700px);
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  text-align: center;
+}
+
+.copy-me-header h1 {
+  margin: 0;
+  font-size: clamp(2.75rem, 8vw, 4.5rem);
+}
+
+.copy-me-header p {
+  margin: 14px 0 24px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.copy-me-scores {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin: 18px 0;
+  font-size: 1.1rem;
+}
+
+.copy-me-pattern {
+  min-height: 90px;
+  margin-bottom: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+}
+
+.copy-me-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 0 auto 24px;
+}
+
+.copy-me-character {
+  aspect-ratio: 1.4;
+  border: 3px solid #111;
+  border-radius: 20px;
+  background: white;
+
+  font-size: clamp(4rem, 15vw, 7rem);
+
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.copy-me-character:active {
+  transform: scale(0.95);
+}
+
+.copy-me-hint {
+  min-height: 120px;
+  margin-bottom: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 7rem;
+}
+
+.copy-me-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.copy-me-comparison > div {
+  padding: 20px 12px;
+  border: 2px solid #111;
+  border-radius: 16px;
+  background: white;
+}
+
+.copy-me-comparison strong {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.copy-me-comparison span {
+  font-size: clamp(2rem, 7vw, 3.5rem);
+}
+
+.copy-me-action {
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 20px;
+
+  border: 3px solid #111;
+  border-radius: 14px;
+  background: #111;
+  color: white;
+
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy-me-action:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.copy-me-reset {
+  margin-top: 18px;
+  padding: 10px 18px;
+
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .copy-me-game {
+    padding: 20px 12px 32px;
+  }
+
+  .copy-me-buttons {
+    gap: 10px;
+  }
+
+  .copy-me-scores {
+    gap: 18px;
+    font-size: 1rem;
+  }
+}
+
+.copy-me-home {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.copy-me-home:hover {
+  text-decoration: underline;
+}

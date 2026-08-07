@@ -1,0 +1,69 @@
+.memory-game {
+  width: min(92vw, 700px);
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  text-align: center;
+}
+
+.memory-game header h1 {
+  margin: 0;
+  font-size: 3rem;
+}
+
+.memory-game header p {
+  margin: 12px 0 24px;
+  font-size: 1.25rem;
+}
+
+.memory-scores {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 28px;
+}
+
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.memory-card {
+  aspect-ratio: 1;
+  width: 100%;
+  border: 2px solid #111;
+  border-radius: 12px;
+  background: #222;
+  color: white;
+  font-size: clamp(2rem, 7vw, 4rem);
+  cursor: pointer;
+}
+
+.memory-card.visible {
+  background: white;
+  color: #111;
+}
+
+.memory-game-over {
+  margin-top: 28px;
+}
+
+.memory-game-over button {
+  padding: 12px 22px;
+  border: 2px solid #111;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.memory-home {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.memory-home:hover {
+  text-decoration: underline;
+}
