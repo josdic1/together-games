@@ -22,6 +22,16 @@ const characters: Character[] = [
   { id: 'panda', name: 'Panda', emoji: '🐼' },
   { id: 'rabbit', name: 'Rabbit', emoji: '🐰' },
   { id: 'monkey', name: 'Monkey', emoji: '🐵' },
+  { id: 'dog', name: 'Dog', emoji: '🐶' },
+  { id: 'cat', name: 'Cat', emoji: '🐱' },
+  { id: 'pig', name: 'Pig', emoji: '🐷' },
+  { id: 'cow', name: 'Cow', emoji: '🐮' },
+  { id: 'mouse', name: 'Mouse', emoji: '🐭' },
+  { id: 'koala', name: 'Koala', emoji: '🐨' },
+  { id: 'tiger', name: 'Tiger', emoji: '🐯' },
+  { id: 'chicken', name: 'Chicken', emoji: '🐔' },
+  { id: 'penguin', name: 'Penguin', emoji: '🐧' },
+  { id: 'octopus', name: 'Octopus', emoji: '🐙' },
 ]
 
 function makeDeck(): Card[] {
