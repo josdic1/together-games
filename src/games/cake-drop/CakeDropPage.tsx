@@ -391,6 +391,32 @@ export default function CakeDropPage() {
     setPhase('falling')
   }
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.code !== 'Space' ||
+        event.repeat
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      dropLayer()
+    }
+
+    window.addEventListener(
+      'keydown',
+      handleKeyDown,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      )
+    }
+  }, [phase])
+
   function toggleMode() {
     setMode((current) =>
       current === 'little'

@@ -319,6 +319,32 @@ export default function ParkerPage() {
     setPhase('driving')
   }
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.code !== 'Space' ||
+        event.repeat
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      park()
+    }
+
+    window.addEventListener(
+      'keydown',
+      handleKeyDown,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      )
+    }
+  }, [phase])
+
   function toggleMode() {
     setMode((current) =>
       current === 'little'

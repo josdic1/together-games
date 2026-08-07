@@ -331,6 +331,32 @@ export default function BugJumpPage() {
     }
   }
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.code !== 'Space' ||
+        event.repeat
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      jump()
+    }
+
+    window.addEventListener(
+      'keydown',
+      handleKeyDown,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      )
+    }
+  }, [phase])
+
   function toggleMode() {
     setMode((current) =>
       current === 'little'
