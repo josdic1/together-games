@@ -184,3 +184,13 @@
     border-radius: 18px;
   }
 }
+
+.spot-difference-item img {
+  width: 88%;
+  height: 88%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+}
