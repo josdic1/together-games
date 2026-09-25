@@ -1,0 +1,214 @@
+@import '@fontsource/fredoka/700.css';
+
+:root {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --paper: #fffaf0;
+  --ink: #171717;
+  --pink: #ff5a86;
+  --yellow: #ffe33b;
+  --blue: #20b9df;
+  --green: #62cf50;
+  --purple: #9f68e6;
+  --white: #fffdf8;
+}
+
+html,
+body,
+#root {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:is(
+  .memory-game,
+  .copy-me-game,
+  .spot-difference-game,
+  .cake-drop-game,
+  .parker-game,
+  .find-unicorn-game,
+  .bug-jump-game,
+  .find-floor-game
+) {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+
+:is(
+  .memory-topbar,
+  .copy-me-topbar,
+  .spot-difference-topbar,
+  .cake-drop-topbar,
+  .parker-topbar,
+  .find-unicorn-topbar,
+  .bug-jump-topbar,
+  .find-floor-topbar
+) {
+  background: transparent !important;
+}
+
+:is(
+  .memory-topbar,
+  .copy-me-topbar,
+  .spot-difference-topbar,
+  .cake-drop-topbar,
+  .parker-topbar,
+  .find-unicorn-topbar,
+  .bug-jump-topbar,
+  .find-floor-topbar
+) h1 {
+  margin: 0;
+  color: var(--ink) !important;
+  font-family: 'Fredoka', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: -.055em;
+  text-shadow: none !important;
+}
+
+:is(
+  .memory-home,.memory-reset,
+  .copy-me-home,.copy-me-reset,
+  .spot-difference-home,.spot-difference-reset,
+  .cake-drop-home,.cake-drop-reset,.cake-drop-mode,
+  .parker-home,.parker-reset,.parker-mode,
+  .find-unicorn-home,.find-unicorn-reset,.find-unicorn-action,
+  .bug-jump-home,.bug-jump-reset,.bug-jump-action,.bug-jump-picker,
+  .find-floor-home,.find-floor-reset,.find-floor-mode
+) {
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px 15px 11px 14px !important;
+  background: var(--white) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  text-decoration: none;
+}
+
+:is(
+  .spot-difference-scene,
+  .cake-drop-stage,
+  .parker-stage,
+  .find-unicorn-stage,
+  .bug-jump-stage,
+  .find-floor-stage
+) {
+  border: 4px solid var(--ink) !important;
+  border-radius: 18px 22px 19px 21px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+:is(
+  .memory-player,
+  .copy-me-score,
+  .copy-me-pattern,
+  .cake-drop-player,
+  .cake-drop-stats span,
+  .parker-player,
+  .parker-stats span,
+  .bug-jump-score,
+  .find-floor-score,
+  .copy-me-status,
+  .spot-difference-progress,
+  .cake-drop-status,
+  .parker-status,
+  .find-unicorn-status,
+  .bug-jump-status,
+  .find-floor-status
+) {
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px 15px 11px 14px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Images are the artwork. Remove the old decorative circles and filters. */
+.copy-me-character::before,
+.paper-zoo-game-card__art::before {
+  display: none !important;
+}
+
+.copy-me-character,
+.spot-difference-item {
+  background: transparent !important;
+}
+
+.copy-me-character img,
+.spot-difference-item img,
+.memory-card img,
+.find-floor-prize,
+.find-unicorn-reveal img {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  object-fit: contain !important;
+}
+
+.memory-card {
+  border: 3px solid var(--ink) !important;
+  border-radius: 13px 10px 15px 12px !important;
+  box-shadow: none !important;
+}
+
+.memory-card.visible {
+  background: var(--white) !important;
+}
+
+.memory-card:nth-child(4n + 1) { background: var(--yellow) !important; }
+.memory-card:nth-child(4n + 2) { background: var(--blue) !important; }
+.memory-card:nth-child(4n + 3) { background: var(--pink) !important; }
+.memory-card:nth-child(4n) { background: var(--purple) !important; }
+
+.spot-difference-scene {
+  background: var(--white) !important;
+}
+
+.spot-difference-item {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.cake-drop-stage { background: var(--pink) !important; }
+
+.find-unicorn-stage { background: var(--yellow) !important; }
+.find-floor-stage { background: var(--blue) !important; }
+
+.find-unicorn-cover,
+.find-unicorn-scene-button,
+.find-floor-key {
+  box-shadow: none !important;
+}
+
+.find-floor-status,
+.copy-me-status,
+.spot-difference-progress,
+.cake-drop-status,
+.parker-status,
+.find-unicorn-status,
+.bug-jump-status {
+  background: var(--yellow) !important;
+}
+
+@media (max-width: 700px) {
+  :is(
+    .memory-game,
+    .copy-me-game,
+    .spot-difference-game,
+    .cake-drop-game,
+    .parker-game,
+    .find-unicorn-game,
+    .bug-jump-game,
+    .find-floor-game
+  ) {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}

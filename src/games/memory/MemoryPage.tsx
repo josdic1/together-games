@@ -4,6 +4,7 @@ import {
   characters,
   type Character,
 } from '../../content/characters'
+import { playTap, playCorrect, playWrong, playWin } from '../../shared/sound'
 import './MemoryPage.css'
 
 type Card = Character & {
@@ -42,6 +43,8 @@ export default function MemoryPage() {
       return
     }
 
+    playTap()
+
     const nextSelected = [...selected, index]
     setSelected(nextSelected)
 
@@ -67,10 +70,20 @@ export default function MemoryPage() {
         [currentPlayer]: currentScores[currentPlayer] + 1,
       }))
 
+      const matchedCount = cards.filter((c) => c.matched).length
+      const isLastPair = matchedCount + 2 === cards.length
+
+      if (isLastPair) {
+        playWin()
+      } else {
+        playCorrect()
+      }
+
       setSelected([])
       return
     }
 
+    playWrong()
     setLocked(true)
 
     window.setTimeout(() => {

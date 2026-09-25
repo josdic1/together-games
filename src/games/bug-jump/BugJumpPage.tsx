@@ -4,410 +4,694 @@ import {
   useState,
 } from 'react'
 import { Link } from 'react-router-dom'
+
+import { characters } from '../../content/characters'
+import { playTap, playCorrect, playWrong } from '../../shared/sound'
+
 import './BugJumpPage.css'
 
 type Phase =
-  | 'ready'
-  | 'running'
-  | 'stumble'
+  | 'choose'
+  | 'playing'
+  | 'bonk'
 
 type Bug = {
   id: number
   x: number
+  characterId: string
   resolved: boolean
 }
 
-const GROUND_HEIGHT = 15
-const PRINCESS_X = 22
-const BUG_WIDTH = 8
-const BUG_HEIGHT = 7
-const HIT_RADIUS = 4.5
+const PLAYER_X = 22
+const START_X = 108
+const HIT_DISTANCE = 5
 
-const DASH_COUNT = 8
-const DASH_GAP = 100 / DASH_COUNT
+const JUMP_DURATIONS = [
+  650,
+  850,
+  1050,
+  1250,
+  1500,
+] as const
 
-const CHECKPOINT_EVERY = 5
-const STUMBLE_HOLD = 760
+const SPEEDS = [
+  18,
+  24,
+  31,
+  39,
+  48,
+  60,
+  74,
+] as const
 
 /*
- * Vertical jump values are percentages of the stage,
- * not pixels. That keeps the game responsive.
+ * Distance between bugs.
+ * Lower number = more bugs on screen.
  */
-const modes = {
-  little: {
-    hang: 1.05,
-    peak: 31,
-    speed: 26,
-    speedStep: 0.3,
-    speedMax: 36,
-    gap: 3,
-    gapStep: -0.03,
-    gapMin: 2.2,
-  },
+const BUG_SPACING = [
+  82,
+  62,
+  48,
+  36,
+  25,
+] as const
 
-  big: {
-    hang: 0.72,
-    peak: 22,
-    speed: 32,
-    speedStep: 0.45,
-    speedMax: 46,
-    gap: 2,
-    gapStep: -0.04,
-    gapMin: 1,
-  },
+const BUG_IDS = [
+  'bogus',
+  'joshua-david',
+  'bad-joshua-david',
+] as const
+
+const STORAGE_KEY =
+  'together-games:jumper'
+
+const SPEED_STORAGE_KEY =
+  'together-games:bug-jump-speed'
+
+const FLOAT_STORAGE_KEY =
+  'together-games:bug-jump-float'
+
+const DENSITY_STORAGE_KEY =
+  'together-games:bug-jump-density'
+
+function getStartingCharacterIndex() {
+  const savedId =
+    window.localStorage.getItem(
+      STORAGE_KEY,
+    )
+
+  if (savedId) {
+    const savedIndex =
+      characters.findIndex(
+        (character) =>
+          character.id === savedId,
+      )
+
+    if (savedIndex >= 0) {
+      return savedIndex
+    }
+  }
+
+  const flemishIndex =
+    characters.findIndex(
+      (character) =>
+        character.id ===
+        'flemish',
+    )
+
+  return flemishIndex >= 0
+    ? flemishIndex
+    : 0
+}
+
+function getSavedLevel(
+  key: string,
+  max: number,
+  fallback: number,
+) {
+  const saved =
+    Number(
+      window.localStorage.getItem(
+        key,
+      ),
+    )
+
+  if (
+    Number.isInteger(saved) &&
+    saved >= 1 &&
+    saved <= max
+  ) {
+    return saved
+  }
+
+  return fallback
+}
+
+function getBugCharacter(
+  id: string,
+) {
+  return (
+    characters.find(
+      (character) =>
+        character.id === id,
+    ) ?? characters[0]
+  )
+}
+
+function randomBugId(
+  avoid?: string,
+) {
+  const choices =
+    BUG_IDS.filter(
+      (id) =>
+        id !== avoid,
+    )
+
+  return choices[
+    Math.floor(
+      Math.random() *
+        choices.length,
+    )
+  ]
 }
 
 export default function BugJumpPage() {
-  const [phase, setPhase] =
-    useState<Phase>('ready')
+  const [
+    characterIndex,
+    setCharacterIndex,
+  ] = useState(
+    getStartingCharacterIndex,
+  )
 
-  const [hopped, setHopped] =
-    useState(0)
+  const [
+    speedLevel,
+    setSpeedLevel,
+  ] = useState(
+    () =>
+      getSavedLevel(
+        SPEED_STORAGE_KEY,
+        SPEEDS.length,
+        1,
+      ),
+  )
 
-  const [best, setBest] =
-    useState(0)
+  const [
+    floatLevel,
+    setFloatLevel,
+  ] = useState(
+    () =>
+      getSavedLevel(
+        FLOAT_STORAGE_KEY,
+        JUMP_DURATIONS.length,
+        JUMP_DURATIONS.length,
+      ),
+  )
 
-  const [bugs, setBugs] =
-    useState<Bug[]>([])
+  const [
+    densityLevel,
+    setDensityLevel,
+  ] = useState(
+    () =>
+      getSavedLevel(
+        DENSITY_STORAGE_KEY,
+        BUG_SPACING.length,
+        1,
+      ),
+  )
 
-  const [height, setHeight] =
-    useState(0)
+  const [
+    phase,
+    setPhase,
+  ] = useState<Phase>(
+    'choose',
+  )
 
-  const [scroll, setScroll] =
-    useState(0)
+  const [
+    bugs,
+    setBugs,
+  ] = useState<Bug[]>([])
 
-  const [mode, setMode] =
-    useState<'little' | 'big'>(
-      'little',
+  const [
+    score,
+    setScore,
+  ] = useState(0)
+
+  const [
+    isJumping,
+    setIsJumping,
+  ] = useState(false)
+
+  const phaseRef =
+    useRef<Phase>('choose')
+
+  const bugsRef =
+    useRef<Bug[]>([])
+
+  const nextBugIdRef =
+    useRef(1)
+
+  const lastBugCharacterRef =
+    useRef<string | undefined>(
+      undefined,
     )
 
-  const jumpRef = useRef(false)
-  const idRef = useRef(1)
+  const jumpUntilRef =
+    useRef(0)
 
-  const worldRef = useRef({
-    bugs: [] as Bug[],
-    y: 0,
-    vy: 0,
-    airborne: false,
-    spawnIn: 1.4,
-    scroll: 0,
-    hopped: 0,
-  })
+  const jumpDurationRef =
+    useRef(
+      JUMP_DURATIONS[
+        getSavedLevel(
+          FLOAT_STORAGE_KEY,
+          JUMP_DURATIONS.length,
+          JUMP_DURATIONS.length,
+        ) - 1
+      ],
+    )
 
-  const tune = modes[mode]
+  const lastFrameRef =
+    useRef(0)
 
-  const lift =
-    (4 * tune.peak) /
-    tune.hang
+  const bonkTimerRef =
+    useRef<number | null>(null)
 
-  const gravity =
-    (2 * lift) /
-    tune.hang
+  const jumpTimerRef =
+    useRef<number | null>(null)
 
-  /*
-   * The five crown points show progress toward
-   * the next safe checkpoint.
-   */
-  const checkpointProgress =
-    hopped === 0
-      ? 0
-      : ((hopped - 1) %
-          CHECKPOINT_EVERY) +
-        1
+  const jumper =
+    characters[characterIndex]
 
-  useEffect(() => {
-    if (phase !== 'running') {
+  const speed =
+    SPEEDS[
+      speedLevel - 1
+    ]
+
+  const spacing =
+    BUG_SPACING[
+      densityLevel - 1
+    ]
+
+  const jumpDuration =
+    JUMP_DURATIONS[
+      floatLevel - 1
+    ]
+
+  function setGamePhase(
+    nextPhase: Phase,
+  ) {
+    phaseRef.current =
+      nextPhase
+
+    setPhase(nextPhase)
+  }
+
+  function chooseCharacter(
+    index: number,
+  ) {
+    const character =
+      characters[index]
+
+    setCharacterIndex(index)
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      character.id,
+    )
+  }
+
+  function chooseSpeed(
+    level: number,
+  ) {
+    setSpeedLevel(level)
+
+    window.localStorage.setItem(
+      SPEED_STORAGE_KEY,
+      String(level),
+    )
+  }
+
+  function chooseFloat(
+    level: number,
+  ) {
+    const duration =
+      JUMP_DURATIONS[
+        level - 1
+      ]
+
+    setFloatLevel(level)
+
+    jumpDurationRef.current =
+      duration
+
+    window.localStorage.setItem(
+      FLOAT_STORAGE_KEY,
+      String(level),
+    )
+  }
+
+  function chooseDensity(
+    level: number,
+  ) {
+    setDensityLevel(level)
+
+    window.localStorage.setItem(
+      DENSITY_STORAGE_KEY,
+      String(level),
+    )
+  }
+
+  function createBug(
+    x = START_X,
+  ): Bug {
+    const characterId =
+      randomBugId(
+        lastBugCharacterRef.current,
+      )
+
+    lastBugCharacterRef.current =
+      characterId
+
+    return {
+      id:
+        nextBugIdRef.current++,
+      x,
+      characterId,
+      resolved: false,
+    }
+  }
+
+  function resetBugs() {
+    const first =
+      createBug(START_X)
+
+    bugsRef.current = [
+      first,
+    ]
+
+    setBugs([
+      first,
+    ])
+  }
+
+  function startGame() {
+    setScore(0)
+    setIsJumping(false)
+
+    jumpUntilRef.current = 0
+
+    lastFrameRef.current =
+      performance.now()
+
+    resetBugs()
+
+    setGamePhase(
+      'playing',
+    )
+  }
+
+  function jump() {
+    if (
+      phaseRef.current !==
+      'playing'
+    ) {
       return
     }
 
-    let frameId = 0
-    let last = performance.now()
+    const now =
+      performance.now()
 
-    function frame(now: number) {
-      const step = Math.min(
-        (now - last) / 1000,
-        0.05,
+    if (
+      now <
+      jumpUntilRef.current
+    ) {
+      return
+    }
+
+    const duration =
+      jumpDurationRef.current
+
+    jumpUntilRef.current =
+      now + duration
+
+    playTap()
+    setIsJumping(true)
+
+    if (
+      jumpTimerRef.current
+    ) {
+      window.clearTimeout(
+        jumpTimerRef.current,
       )
+    }
 
-      last = now
-
-      const world =
-        worldRef.current
-
-      const speed = Math.min(
-        tune.speed +
-          world.hopped *
-            tune.speedStep,
-        tune.speedMax,
+    jumpTimerRef.current =
+      window.setTimeout(
+        () => {
+          setIsJumping(false)
+        },
+        duration,
       )
+  }
 
-      const gap = Math.max(
-        tune.gap +
-          world.hopped *
-            tune.gapStep,
-        tune.gapMin,
+  function bonk() {
+    if (
+      phaseRef.current !==
+      'playing'
+    ) {
+      return
+    }
+
+    playWrong()
+    setGamePhase('bonk')
+    setIsJumping(false)
+
+    jumpUntilRef.current = 0
+
+    if (
+      jumpTimerRef.current
+    ) {
+      window.clearTimeout(
+        jumpTimerRef.current,
       )
+    }
 
-      if (jumpRef.current) {
-        jumpRef.current = false
+    if (
+      bonkTimerRef.current
+    ) {
+      window.clearTimeout(
+        bonkTimerRef.current,
+      )
+    }
 
-        if (!world.airborne) {
-          world.airborne = true
-          world.vy = lift
-        }
-      }
+    bonkTimerRef.current =
+      window.setTimeout(
+        () => {
+          // A bonk clears the bugs on screen and gives the player a
+          // fresh run, but no longer wipes their score to 0 - one bad
+          // tap shouldn't erase everything they've earned.
+          resetBugs()
 
-      if (world.airborne) {
-        world.vy -=
-          gravity * step
+          lastFrameRef.current =
+            performance.now()
 
-        world.y +=
-          world.vy * step
+          setGamePhase(
+            'playing',
+          )
+        },
+        650,
+      )
+  }
 
-        if (world.y <= 0) {
-          world.y = 0
-          world.vy = 0
-          world.airborne = false
-        }
-      }
-
-      world.scroll +=
-        speed * step
-
-      world.spawnIn -= step
-
-      if (world.spawnIn <= 0) {
-        world.spawnIn = gap
-
-        const id =
-          idRef.current++
-
-        world.bugs = [
-          ...world.bugs,
-          {
-            id,
-            x: 106,
-            resolved: false,
-          },
-        ]
-      }
-
-      let struck = false
-
-      for (
-        const bug of world.bugs
+  useEffect(
+    () => {
+      if (
+        phase !== 'playing'
       ) {
-        bug.x -= speed * step
-
-        if (bug.resolved) {
-          continue
-        }
-
-        if (
-          Math.abs(
-            bug.x -
-              PRINCESS_X,
-          ) < HIT_RADIUS &&
-          world.y < BUG_HEIGHT
-        ) {
-          bug.resolved = true
-          struck = true
-
-          continue
-        }
-
-        if (
-          bug.x <
-          PRINCESS_X -
-            HIT_RADIUS
-        ) {
-          bug.resolved = true
-          world.hopped += 1
-        }
+        return
       }
 
-      world.bugs =
-        world.bugs.filter(
-          (bug) => bug.x > -14,
-        )
+      let frameId = 0
 
-      setBugs([
-        ...world.bugs,
-      ])
+      lastFrameRef.current =
+        performance.now()
 
-      setHeight(world.y)
-      setScroll(world.scroll)
-      setHopped(world.hopped)
+      function frame(
+        now: number,
+      ) {
+        const elapsed =
+          Math.min(
+            (
+              now -
+              lastFrameRef.current
+            ) /
+              1000,
+            0.05,
+          )
 
-      setBest((current) =>
-        Math.max(
-          current,
-          world.hopped,
-        ),
-      )
+        lastFrameRef.current =
+          now
 
-      if (struck) {
-        world.hopped =
-          Math.floor(
-            world.hopped /
-              CHECKPOINT_EVERY,
-          ) *
-          CHECKPOINT_EVERY
+        const jumping =
+          now <
+          jumpUntilRef.current
 
-        setHopped(
-          world.hopped,
-        )
+        let struck = false
+        let passed = 0
 
-        setPhase('stumble')
-        return
+        let nextBugs =
+          bugsRef.current.map(
+            (bug) => {
+              const nextX =
+                bug.x -
+                speed *
+                  elapsed
+
+              if (
+                !bug.resolved &&
+                Math.abs(
+                  nextX -
+                    PLAYER_X,
+                ) <
+                  HIT_DISTANCE
+              ) {
+                if (!jumping) {
+                  struck = true
+                }
+              }
+
+              if (
+                !bug.resolved &&
+                nextX <
+                  PLAYER_X -
+                    HIT_DISTANCE
+              ) {
+                passed += 1
+
+                return {
+                  ...bug,
+                  x: nextX,
+                  resolved: true,
+                }
+              }
+
+              return {
+                ...bug,
+                x: nextX,
+              }
+            },
+          )
+
+        if (struck) {
+          bonk()
+          return
+        }
+
+        if (passed > 0) {
+          playCorrect()
+
+          setScore(
+            (current) =>
+              current +
+              passed,
+          )
+        }
+
+        nextBugs =
+          nextBugs.filter(
+            (bug) =>
+              bug.x > -14,
+          )
+
+        const rightmost =
+          nextBugs.reduce(
+            (
+              highest,
+              bug,
+            ) =>
+              Math.max(
+                highest,
+                bug.x,
+              ),
+            -Infinity,
+          )
+
+        if (
+          nextBugs.length === 0 ||
+          rightmost <=
+            START_X -
+              spacing
+        ) {
+          nextBugs = [
+            ...nextBugs,
+            createBug(),
+          ]
+        }
+
+        bugsRef.current =
+          nextBugs
+
+        setBugs([
+          ...nextBugs,
+        ])
+
+        frameId =
+          window.requestAnimationFrame(
+            frame,
+          )
       }
 
       frameId =
         window.requestAnimationFrame(
           frame,
         )
-    }
 
-    frameId =
-      window.requestAnimationFrame(
-        frame,
-      )
+      return () => {
+        window.cancelAnimationFrame(
+          frameId,
+        )
+      }
+    },
+    [
+      phase,
+      speed,
+      spacing,
+    ],
+  )
 
-    return () =>
-      window.cancelAnimationFrame(
-        frameId,
-      )
-  }, [
-    phase,
-    mode,
-    tune,
-    lift,
-    gravity,
-  ])
-
-  /*
-   * After a stumble, clear the immediate path.
-   * The player returns at their last checkpoint.
-   */
-  useEffect(() => {
-    if (
-      phase !== 'stumble'
-    ) {
-      return
-    }
-
-    const timer =
-      window.setTimeout(() => {
-        const world =
-          worldRef.current
-
-        world.bugs = []
-        world.y = 0
-        world.vy = 0
-        world.airborne = false
-        world.spawnIn = 1.4
-
-        setBugs([])
-        setHeight(0)
-
-        setPhase('running')
-      }, STUMBLE_HOLD)
-
-    return () =>
-      window.clearTimeout(timer)
-  }, [phase])
-
-  function jump() {
-    if (
-      phase === 'stumble'
-    ) {
-      return
-    }
-
-    jumpRef.current = true
-
-    if (phase === 'ready') {
-      setPhase('running')
-    }
-  }
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (
-        event.code !== 'Space' ||
-        event.repeat
+  useEffect(
+    () => {
+      function keyDown(
+        event: KeyboardEvent,
       ) {
-        return
+        if (
+          event.code !==
+            'Space' ||
+          event.repeat
+        ) {
+          return
+        }
+
+        event.preventDefault()
+        jump()
       }
 
-      event.preventDefault()
-      jump()
-    }
-
-    window.addEventListener(
-      'keydown',
-      handleKeyDown,
-    )
-
-    return () => {
-      window.removeEventListener(
+      window.addEventListener(
         'keydown',
-        handleKeyDown,
+        keyDown,
       )
-    }
-  }, [phase])
 
-  function toggleMode() {
-    setMode((current) =>
-      current === 'little'
-        ? 'big'
-        : 'little',
-    )
-  }
+      return () => {
+        window.removeEventListener(
+          'keydown',
+          keyDown,
+        )
+      }
+    },
+    [],
+  )
 
-  function resetGame() {
-    const world =
-      worldRef.current
+  useEffect(
+    () => {
+      return () => {
+        if (
+          bonkTimerRef.current
+        ) {
+          window.clearTimeout(
+            bonkTimerRef.current,
+          )
+        }
 
-    jumpRef.current = false
-    idRef.current = 1
-
-    world.bugs = []
-    world.y = 0
-    world.vy = 0
-    world.airborne = false
-    world.spawnIn = 1.4
-    world.scroll = 0
-    world.hopped = 0
-
-    setBugs([])
-    setHeight(0)
-    setScroll(0)
-    setHopped(0)
-
-    setPhase('ready')
-  }
-
-  function statusText() {
-    if (
-      phase === 'stumble'
-    ) {
-      return 'BONK!'
-    }
-
-    if (phase === 'ready') {
-      return 'Tap JUMP to start'
-    }
-
-    if (
-      checkpointProgress ===
-      CHECKPOINT_EVERY
-    ) {
-      return 'Checkpoint!'
-    }
-
-    return 'Jump the bugs!'
-  }
+        if (
+          jumpTimerRef.current
+        ) {
+          window.clearTimeout(
+            jumpTimerRef.current,
+          )
+        }
+      }
+    },
+    [],
+  )
 
   return (
     <main className="bug-jump-game">
@@ -419,174 +703,413 @@ export default function BugJumpPage() {
           ← Games
         </Link>
 
-        <h1>Bug Jump</h1>
+        <h1>
+          Bug Jump
+        </h1>
 
-        <button
-          className="bug-jump-reset"
-          onClick={resetGame}
-        >
-          Reset
-        </button>
+        <div className="bug-jump-score">
+          {score}
+        </div>
       </header>
 
-      <section className="bug-jump-hud">
-        <div className="bug-jump-score">
-          <span>Jumped</span>
-          <strong>
-            {hopped}
-          </strong>
-        </div>
+      {phase ===
+        'choose' ? (
+        <section className="bug-jump-choose">
+          <div className="bug-jump-choose-copy">
+            <p>
+              PICK YOUR JUMPER
+            </p>
 
-        <p
-          className={`bug-jump-status ${
-            phase === 'stumble'
-              ? 'bug-jump-status--warn'
+            <h2>
+              {jumper.name}
+            </h2>
+          </div>
+
+          <div className="bug-jump-roster">
+            {characters.map(
+              (
+                character,
+                index,
+              ) => (
+                <button
+                  key={
+                    character.id
+                  }
+                  type="button"
+                  className={
+                    index ===
+                    characterIndex
+                      ? 'bug-jump-choice is-selected'
+                      : 'bug-jump-choice'
+                  }
+                  onClick={() =>
+                    chooseCharacter(
+                      index,
+                    )
+                  }
+                >
+                  <img
+                    src={
+                      character.image
+                    }
+                    alt=""
+                    draggable={
+                      false
+                    }
+                  />
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="bug-jump-settings">
+            <div className="bug-jump-setting">
+              <span>
+                SPEED
+              </span>
+
+              <div>
+                {SPEEDS.map(
+                  (
+                    _speed,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
+
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          speedLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseSpeed(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
+
+            <div className="bug-jump-setting">
+              <span>
+                BUGS
+              </span>
+
+              <div>
+                {BUG_SPACING.map(
+                  (
+                    _gap,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
+
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          densityLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseDensity(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
+
+            <div className="bug-jump-setting">
+              <span>
+                FLOAT
+              </span>
+
+              <div>
+                {JUMP_DURATIONS.map(
+                  (
+                    _duration,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
+
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          floatLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseFloat(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="bug-jump-play"
+            onClick={
+              startGame
+            }
+          >
+            PLAY
+          </button>
+        </section>
+      ) : (
+        <section
+          className={`bug-jump-stage ${
+            phase ===
+            'bonk'
+              ? 'is-bonk'
               : ''
           }`}
-          aria-live="polite"
-        >
-          {statusText()}
-        </p>
-
-        <div className="bug-jump-score">
-          <span>Best</span>
-          <strong>
-            {best}
-          </strong>
-        </div>
-      </section>
-
-      <section
-        className="bug-jump-stage"
-        aria-label="Bug path"
-      >
-        <span
-          className="bug-jump-sky-shape bug-jump-sky-shape--one"
-          aria-hidden="true"
-        />
-
-        <span
-          className="bug-jump-sky-shape bug-jump-sky-shape--two"
-          aria-hidden="true"
-        />
-
-        <span
-          className="bug-jump-ground"
-          aria-hidden="true"
-        />
-
-        {Array.from(
-          {
-            length:
-              DASH_COUNT,
-          },
-          (_, index) => (
-            <span
-              key={index}
-              className="bug-jump-dash"
-              style={{
-                left: `${
-                  ((index *
-                    DASH_GAP -
-                    scroll) %
-                    100 +
-                    100) %
-                  100
-                }%`,
-                bottom: `${
-                  GROUND_HEIGHT /
-                  2
-                }%`,
-              }}
-              aria-hidden="true"
-            />
-          ),
-        )}
-
-        {bugs.map((bug) => (
-          <div
-            key={bug.id}
-            className="bug-jump-bug"
-            style={{
-              left: `${bug.x}%`,
-              bottom: `${GROUND_HEIGHT}%`,
-              width: `${BUG_WIDTH}%`,
-              height: `${BUG_HEIGHT}%`,
-            }}
-          >
-            <span className="bug-jump-antenna bug-jump-antenna--left" />
-            <span className="bug-jump-antenna bug-jump-antenna--right" />
-
-            <span className="bug-jump-bug-eye bug-jump-bug-eye--left" />
-            <span className="bug-jump-bug-eye bug-jump-bug-eye--right" />
-          </div>
-        ))}
-
-        <div
-          className={
-            phase === 'stumble'
-              ? 'bug-jump-princess bug-jump-princess--hurt'
-              : 'bug-jump-princess'
+          onPointerDown={
+            jump
           }
-          style={{
-            left: `${PRINCESS_X}%`,
-            bottom: `${
-              GROUND_HEIGHT +
-              height
-            }%`,
-          }}
         >
-          <span
-            className="bug-jump-crown"
-            aria-hidden="true"
+          <div
+            className="bug-jump-live-controls"
+            onPointerDown={(
+              event,
+            ) =>
+              event.stopPropagation()
+            }
           >
-            {[
-              0, 1, 2, 3, 4,
-            ].map((index) => (
-              <span
-                key={index}
-                className={`bug-jump-point ${
-                  index <
-                  checkpointProgress
-                    ? 'bug-jump-point--lit'
-                    : ''
-                }`}
-              />
-            ))}
-          </span>
+            <div className="bug-jump-setting">
+              <span>
+                SPEED
+              </span>
 
-          <span className="bug-jump-head">
-            <span className="bug-jump-eye bug-jump-eye--left" />
-            <span className="bug-jump-eye bug-jump-eye--right" />
-            <span className="bug-jump-smile" />
-          </span>
+              <div>
+                {SPEEDS.map(
+                  (
+                    _speed,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
 
-          <span className="bug-jump-leg bug-jump-leg--left" />
-          <span className="bug-jump-leg bug-jump-leg--right" />
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          speedLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseSpeed(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
 
-          <span className="bug-jump-dress" />
-        </div>
-      </section>
+            <div className="bug-jump-setting">
+              <span>
+                BUGS
+              </span>
 
-      <button
-        className="bug-jump-action"
-        onClick={jump}
-        disabled={
-          phase === 'stumble'
-        }
-      >
-        JUMP!
-      </button>
+              <div>
+                {BUG_SPACING.map(
+                  (
+                    _gap,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
 
-      <button
-        className="bug-jump-mode"
-        onClick={toggleMode}
-      >
-        Jump:{' '}
-        {mode === 'little'
-          ? 'Floaty'
-          : 'Snappy'}
-      </button>
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          densityLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseDensity(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
+
+            <div className="bug-jump-setting">
+              <span>
+                FLOAT
+              </span>
+
+              <div>
+                {JUMP_DURATIONS.map(
+                  (
+                    _duration,
+                    index,
+                  ) => {
+                    const level =
+                      index +
+                      1
+
+                    return (
+                      <button
+                        key={
+                          level
+                        }
+                        type="button"
+                        className={
+                          floatLevel ===
+                          level
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() =>
+                          chooseFloat(
+                            level,
+                          )
+                        }
+                      >
+                        {level}
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="bug-jump-ground"
+            aria-hidden="true"
+          />
+
+          {bugs.map(
+            (bug) => {
+              const obstacle =
+                getBugCharacter(
+                  bug.characterId,
+                )
+
+              return (
+                <img
+                  key={bug.id}
+                  className="bug-jump-obstacle"
+                  src={
+                    obstacle.image
+                  }
+                  alt=""
+                  draggable={
+                    false
+                  }
+                  style={{
+                    left:
+                      `${bug.x}%`,
+                  }}
+                />
+              )
+            },
+          )}
+
+          <img
+            className={`bug-jump-jumper ${
+              isJumping
+                ? 'is-jumping'
+                : ''
+            } ${
+              phase ===
+              'bonk'
+                ? 'is-bonk'
+                : ''
+            }`}
+            src={jumper.image}
+            alt={jumper.name}
+            draggable={false}
+            style={{
+              animationDuration:
+                isJumping
+                  ? `${jumpDuration}ms`
+                  : undefined,
+            }}
+          />
+
+          {phase ===
+            'playing' && (
+            <p className="bug-jump-instruction">
+              TAP ANYWHERE TO JUMP
+            </p>
+          )}
+
+          {phase ===
+            'bonk' && (
+            <div className="bug-jump-bonk">
+              BONK!
+            </div>
+          )}
+        </section>
+      )}
     </main>
   )
 }

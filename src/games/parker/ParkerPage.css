@@ -1,556 +1,662 @@
 .parker-game {
-  width: min(100%, 960px);
+  width: min(100%, 1120px);
   height: 100dvh;
-  max-height: 100dvh;
 
   margin: 0 auto;
-  padding: 12px 28px 16px;
+  padding: 18px 24px 22px;
 
   display: grid;
   grid-template-rows:
     auto
-    auto
-    auto
-    minmax(0, 1fr)
-    auto
-    auto;
+    minmax(0, 1fr);
 
-  gap: 10px;
+  gap: 16px;
 
   overflow: hidden;
+
+  background: #fffaf0;
+  color: #171717;
 }
 
-/* ── TOP ───────────────────────────────────────── */
+/* HEADER */
 
 .parker-topbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns:
+    110px
+    1fr
+    110px;
+
+  gap: 12px;
   align-items: center;
-  gap: 16px;
 }
 
 .parker-topbar h1 {
   margin: 0;
 
-  font-size: clamp(2.6rem, 5vh, 4rem);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-}
+  text-align: center;
 
-.parker-home,
-.parker-reset,
-.parker-mode {
-  min-height: 46px;
-  padding: 7px 16px;
+  font-size:
+    clamp(
+      2rem,
+      5vh,
+      4.1rem
+    );
 
-  border: 4px solid var(--ink);
-  border-radius: 999px;
-
-  background: var(--paper);
-  color: var(--ink);
-
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
-
-  text-decoration: none;
-  cursor: pointer;
-  touch-action: manipulation;
+  line-height: .9;
+  text-transform: uppercase;
+  letter-spacing: -.055em;
 }
 
 .parker-home {
-  justify-self: start;
+  min-height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 7px 12px;
+
+  border: 3px solid #171717;
+  border-radius:
+    14px 12px 15px 13px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  color: #171717;
+  text-decoration: none;
 }
 
-.parker-reset {
+.parker-topbar-spacer {
+  width: 58px;
+  height: 44px;
+
   justify-self: end;
 }
 
-.parker-home:active,
-.parker-reset:active,
-.parker-mode:active {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-
-/* ── PLAYERS / SCORE ───────────────────────────── */
-
-.parker-hud {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 14px;
-}
-
-.parker-player {
-  min-height: 64px;
-  padding: 9px 16px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  border: 4px solid var(--ink);
-  border-radius: 22px;
-
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
-
-  transition:
-    transform 140ms cubic-bezier(.2, 1.6, .4, 1),
-    opacity 140ms linear;
-}
-
-.parker-player--one {
-  background: var(--tomato);
-}
-
-.parker-player--two {
-  background: var(--sea);
-}
-
-.parker-player:not(.is-active) {
-  opacity: 0.4;
-  transform: scale(0.95);
-}
-
-.parker-player.is-active {
-  transform: translateY(-3px) scale(1.02);
-}
-
-.parker-player span {
-  font-size: 1rem;
-}
-
-.parker-player strong {
-  padding: 5px 10px;
-
-  border: 3px solid var(--ink);
-  border-radius: 999px;
-
-  background: var(--paper);
-
-  font-size: 0.78rem;
-  white-space: nowrap;
-}
-
-.parker-stats {
-  display: flex;
-  gap: 7px;
-}
-
-.parker-stats span {
-  min-width: 72px;
-  padding: 7px 10px;
-
-  border: 3px solid var(--ink);
-  border-radius: 18px;
-
-  background: var(--paper);
-
-  text-align: center;
-  font-size: 0.72rem;
-}
-
-.parker-stats strong {
-  display: block;
-
-  margin-top: 2px;
-
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-/* ── STATUS ────────────────────────────────────── */
-
-.parker-status {
-  width: fit-content;
-  max-width: 100%;
-
-  margin: 0 auto;
-  padding: 6px 16px;
-
-  border: 4px solid var(--ink);
-  border-radius: 999px;
-
-  background: var(--sun);
-  color: var(--ink);
-
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
-
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.parker-status--warn {
-  background: var(--tomato);
-}
-
-/* ── STAGE ─────────────────────────────────────── */
+/* PLAYFIELD */
 
 .parker-stage {
   position: relative;
 
   min-height: 0;
+  overflow: hidden;
+
+  border: 4px solid #171717;
+  border-radius:
+    22px 18px 24px 19px;
+
+  background-color: #fffdf8;
+
+  background-image:
+    linear-gradient(
+      rgb(32 185 223 / .17)
+      1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(32 185 223 / .17)
+      1px,
+      transparent 1px
+    );
+
+  background-size:
+    22px 22px;
+
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* JIM BABY SCORE */
+
+.parker-jim-card {
+  position: absolute;
+
+  z-index: 40;
+
+  top: 14px;
+  left: 14px;
+
+  width: 220px;
+
+  display: grid;
+  grid-template-columns:
+    58px
+    1fr
+    38px;
+
+  gap: 10px;
+  align-items: center;
+
+  padding: 8px;
+
+  border: 3px solid #171717;
+  border-radius:
+    18px 14px 17px 13px;
+
+  background: #dff7ff;
+
+  box-shadow:
+    4px 5px 0 #171717;
+}
+
+.parker-jim-card img {
+  width: 58px;
+  height: 58px;
+
+  object-fit: contain;
+  display: block;
+}
+
+.parker-jim-card div {
+  display: grid;
+  gap: 1px;
+}
+
+.parker-jim-card span {
+  font-size: .67rem;
+  letter-spacing: .06em;
+}
+
+.parker-jim-card strong {
+  font-size: .96rem;
+  line-height: 1;
+}
+
+.parker-jim-card b {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border: 3px solid #171717;
+  border-radius: 50%;
+
+  background: #20b9df;
+
+  font-size: 1.05rem;
+}
+
+.parker-best-card {
+  position: absolute;
+
+  z-index: 40;
+
+  top: 14px;
+  right: 14px;
+
+  width: 112px;
+  min-height: 72px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 8px;
+
+  border: 3px solid #171717;
+  border-radius:
+    18px 14px 17px 13px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  text-align: center;
+}
+
+.parker-best-card span {
+  font-size: .66rem;
+  letter-spacing: .06em;
+}
+
+.parker-best-card strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/* CENTER CONTROLS */
+
+.parker-center-controls {
+  position: absolute;
+
+  z-index: 45;
+
+  top: 14px;
+  left: 50%;
+
+  width:
+    min(
+      460px,
+      44%
+    );
+
+  display: grid;
+  justify-items: center;
+
+  gap: 7px;
+
+  transform:
+    translateX(-50%);
+}
+
+.parker-door-status {
+  padding:
+    6px
+    14px;
+
+  border: 3px solid #171717;
+  border-radius: 999px;
+
+  background: #ffe33b;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  font-size: .78rem;
+  letter-spacing: .04em;
+}
+
+.parker-speed-control,
+.parker-door-control {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    6px
+    9px;
+
+  border: 3px solid #171717;
+  border-radius:
+    15px 12px 16px 13px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    3px 4px 0 #171717;
+}
+
+.parker-speed-control > span,
+.parker-door-control > span {
+  font-size: .64rem;
+  letter-spacing: .05em;
+}
+
+.parker-speed-control > div,
+.parker-door-control > div {
+  display: flex;
+  gap: 5px;
+}
+
+.parker-speed-control button,
+.parker-door-control button {
+  min-width: 31px;
+  height: 31px;
+
+  display: grid;
+  place-items: center;
+
+  padding:
+    0
+    8px;
+
+  border: 2px solid #171717;
+  border-radius: 999px;
+
+  background: #fffdf8;
+  color: #171717;
+
+  box-shadow:
+    1px 2px 0 #171717;
+
+  font-size: .72rem;
+}
+
+.parker-speed-control button.is-active,
+.parker-door-control button.is-active {
+  background: #20b9df;
+
+  transform:
+    translateY(-2px);
+}
+
+.parker-park-button {
+  min-width: 130px;
+  min-height: 46px;
+
+  padding:
+    5px
+    18px;
+
+  border: 3px solid #171717;
+  border-radius:
+    15px 12px 17px 14px;
+
+  background: #ffe33b;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  color: #171717;
+
+  font-size: 1.45rem;
+  letter-spacing: -.03em;
+}
+
+.parker-park-button:active,
+.parker-speed-control button:active,
+.parker-door-control button:active,
+.parker-home:active {
+  transform:
+    translate(
+      3px,
+      4px
+    );
+
+  box-shadow: none;
+}
+
+/* TRANSPARENT HOUSE ASSET */
+
+.parker-house {
+  position: absolute;
+
+  z-index: 8;
+
+  top: 23%;
+  left: 50%;
+
+  width:
+    min(
+      64%,
+      700px
+    );
+
+  aspect-ratio: 3 / 2;
+
+  transform:
+    translateX(-50%);
+
+  pointer-events: none;
+}
+
+.parker-house-art {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  object-fit: contain;
+
+  pointer-events: none;
+}
+
+/*
+ * Coordinates measured from the accepted 1536x1024
+ * transparent house asset.
+ */
+.parker-door-window {
+  position: absolute;
+
+  z-index: 12;
+
+  left: 48.8%;
+  top: 45.7%;
+
+  width: 28.5%;
+  height: 24.5%;
 
   overflow: hidden;
 
-  border: 5px solid var(--ink);
-  border-radius: 30px;
-
-  background: var(--paper);
-
-  box-shadow: 0 6px 0 rgb(42 33 24 / 15%);
+  pointer-events: none;
 }
 
-/* ── GARAGE ────────────────────────────────────── */
+.parker-door-art {
+  position: absolute;
+  inset: 0;
 
-.parker-garage {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  object-fit: cover;
+
+  will-change: transform;
+}
+
+/* AIM / CAR */
+
+.parker-aim-line {
   position: absolute;
 
-  border: 5px solid var(--ink);
-  border-radius: 28px 28px 0 0;
+  z-index: 2;
 
-  background: var(--sea);
+  left: 59%;
+  top: 58%;
+  bottom: 9%;
 
-  box-shadow: 0 5px 0 rgb(42 33 24 / 12%);
+  border-left:
+    3px dashed
+    rgb(23 23 23 / .12);
+
+  transform:
+    translateX(-50%);
+
+  pointer-events: none;
 }
-
-.parker-windows {
-  height: 32%;
-
-  padding: 12px 8% 0;
-
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5%;
-}
-
-.parker-window {
-  min-width: 0;
-
-  border: 4px solid var(--ink);
-  border-radius: 8px;
-
-  background: var(--paper);
-}
-
-.parker-window--lit {
-  background: var(--sun);
-}
-
-/* doorway */
-
-.parker-opening {
-  position: absolute;
-  left: 50%;
-
-  border: 5px solid var(--ink);
-  border-bottom: 0;
-  border-radius: 20px 20px 0 0;
-
-  background: var(--paper);
-
-  transform: translateX(-50%);
-}
-
-/* ── ROAD ──────────────────────────────────────── */
-
-.parker-guide {
-  position: absolute;
-  left: 50%;
-
-  width: 0;
-
-  border-left: 5px dashed rgb(42 33 24 / 20%);
-
-  transform: translateX(-50%);
-}
-
-.parker-road {
-  position: absolute;
-  left: 0;
-  right: 0;
-
-  height: 5px;
-
-  background: var(--ink);
-}
-
-/* little paper road shoulders */
-
-.parker-stage::before,
-.parker-stage::after {
-  content: '';
-
-  position: absolute;
-  bottom: 5%;
-  z-index: 0;
-
-  width: 22%;
-  height: 9%;
-
-  border: 4px solid var(--ink);
-  border-radius: 999px;
-
-  background: var(--sun);
-}
-
-.parker-stage::before {
-  left: -7%;
-  transform: rotate(8deg);
-}
-
-.parker-stage::after {
-  right: -7%;
-  transform: rotate(-8deg);
-}
-
-/* ── CAR ───────────────────────────────────────── */
 
 .parker-car {
   position: absolute;
-  z-index: 3;
 
-  min-width: 54px;
-  min-height: 42px;
+  z-index: 20;
 
-  border: 5px solid var(--ink);
-  border-radius: 18px;
+  width:
+    clamp(
+      96px,
+      10vw,
+      142px
+    );
 
-  background: var(--tomato);
+  height:
+    clamp(
+      96px,
+      10vw,
+      142px
+    );
 
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+  display: block;
+  object-fit: contain;
 
-  transform: translateX(-50%);
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  transform-origin:
+    center bottom;
+
+  pointer-events: none;
+  user-select: none;
 }
 
-.parker-lamp {
-  position: absolute;
-  top: 8%;
-
-  width: 15%;
-  aspect-ratio: 1;
-
-  border: 3px solid var(--ink);
-  border-radius: 50%;
-
-  background: var(--sun);
+.parker-car.is-parked {
+  animation:
+    parker-success
+    380ms
+    ease-out;
 }
 
-.parker-lamp--left {
-  left: 9%;
-}
-
-.parker-lamp--right {
-  right: 9%;
-}
-
-.parker-windshield {
-  position: absolute;
-  top: 33%;
-  left: 50%;
-
-  width: 58%;
-  height: 30%;
-
-  border: 4px solid var(--ink);
-  border-radius: 8px;
-
-  background: var(--paper);
-
-  transform: translateX(-50%);
-}
-
-.parker-car--bonk {
+.parker-car.is-bonk {
   animation:
     parker-bonk
-    620ms
-    cubic-bezier(.2, .9, .3, 1.2)
-    forwards;
+    180ms
+    linear
+    2;
 }
 
-@keyframes parker-bonk {
+@keyframes parker-success {
   0% {
     transform:
-      translateX(-50%)
-      translateY(0)
-      rotate(0);
+      translate(
+        -50%,
+        -50%
+      )
+      scale(.84);
   }
 
-  18% {
+  70% {
     transform:
-      translateX(-54%)
-      translateY(-7px)
-      rotate(-6deg);
-  }
-
-  34% {
-    transform:
-      translateX(-46%)
-      translateY(13px)
-      rotate(5deg);
-  }
-
-  50% {
-    transform:
-      translateX(-52%)
-      translateY(9px)
-      rotate(-3deg);
+      translate(
+        -50%,
+        -50%
+      )
+      scale(1.06);
   }
 
   100% {
     transform:
-      translateX(-50%)
-      translateY(110px)
-      rotate(2deg);
+      translate(
+        -50%,
+        -50%
+      )
+      scale(1);
   }
 }
 
-/* ── MAIN ACTION ───────────────────────────────── */
+@keyframes parker-bonk {
+  0%,
+  100% {
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      rotate(0deg);
+  }
 
-.parker-action {
-  width: 100%;
-  min-height: 66px;
-
-  padding: 9px 24px;
-
-  border: 5px solid var(--ink);
-  border-radius: 999px;
-
-  background: var(--tomato);
-  color: var(--ink);
-
-  box-shadow: 0 5px 0 rgb(42 33 24 / 15%);
-
-  font-size: 1.55rem;
-
-  cursor: pointer;
-  touch-action: manipulation;
+  50% {
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      rotate(-8deg);
+  }
 }
 
-.parker-action:disabled {
-  opacity: 0.45;
+/* FEEDBACK */
+
+.parker-feedback {
+  position: absolute;
+
+  z-index: 50;
+
+  top: 60%;
+  left: 59%;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    rotate(-5deg);
+
+  font-size:
+    clamp(
+      2.8rem,
+      8vw,
+      5.8rem
+    );
+
+  line-height: .85;
+
+  -webkit-text-stroke:
+    3px #171717;
+
+  paint-order:
+    stroke fill;
+
+  pointer-events: none;
 }
 
-.parker-action:active:not(:disabled) {
-  transform: translateY(5px) scale(0.98);
-  box-shadow: none;
+.parker-feedback--good {
+  color: #72d64d;
 }
 
-/* ── SPEED ─────────────────────────────────────── */
-
-.parker-mode {
-  justify-self: center;
-
-  min-height: 38px;
-  padding: 5px 15px;
-
-  font-size: 0.78rem;
+.parker-feedback--bad {
+  color: #ffe33b;
 }
 
-/* ── SHORT VIEWPORT ────────────────────────────── */
+/* RESPONSIVE */
 
-@media (max-height: 700px) {
+@media (max-width: 820px) {
+  .parker-center-controls {
+    width: 48%;
+  }
+
+  .parker-door-control > div {
+    flex-wrap: wrap;
+  }
+
+  .parker-house {
+    top: 29%;
+    width: 72%;
+  }
+}
+
+@media (max-width: 680px) {
   .parker-game {
-    padding-top: 7px;
-    padding-bottom: 9px;
-    gap: 6px;
-  }
-
-  .parker-topbar h1 {
-    font-size: 2.25rem;
-  }
-
-  .parker-home,
-  .parker-reset {
-    min-height: 40px;
-    padding: 5px 12px;
-  }
-
-  .parker-player {
-    min-height: 52px;
-    padding: 6px 10px;
-  }
-
-  .parker-status {
-    padding: 4px 12px;
-
-    font-size: 0.78rem;
-  }
-
-  .parker-action {
-    min-height: 56px;
-
-    font-size: 1.3rem;
-  }
-
-  .parker-mode {
-    min-height: 34px;
-  }
-}
-
-/* ── NARROW VIEWPORT ───────────────────────────── */
-
-@media (max-width: 700px) {
-  .parker-game {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 12px;
   }
 
   .parker-topbar {
-    gap: 8px;
+    grid-template-columns:
+      84px
+      1fr
+      56px;
   }
 
-  .parker-topbar h1 {
-    font-size: clamp(1.9rem, 8vw, 2.7rem);
+  .parker-jim-card {
+    width: 168px;
+
+    grid-template-columns:
+      44px
+      1fr
+      30px;
   }
 
-  .parker-home,
-  .parker-reset {
-    padding-left: 10px;
-    padding-right: 10px;
-
-    font-size: 0.75rem;
+  .parker-jim-card img {
+    width: 44px;
+    height: 44px;
   }
 
-  .parker-hud {
-    gap: 7px;
+  .parker-jim-card b {
+    width: 29px;
+    height: 29px;
   }
 
-  .parker-player {
-    padding: 6px 8px;
+  .parker-best-card {
+    width: 82px;
   }
 
-  .parker-player span {
-    font-size: 0.78rem;
+  .parker-center-controls {
+    top: 96px;
+
+    width: 92%;
   }
 
-  .parker-player strong {
-    font-size: 0.62rem;
-  }
-
-  .parker-stats {
-    gap: 4px;
-  }
-
-  .parker-stats span {
-    min-width: 52px;
-    padding: 5px;
-
-    font-size: 0.6rem;
-  }
-
-  .parker-stats strong {
-    font-size: 1rem;
-  }
-
-  .parker-car {
-    min-width: 44px;
-    min-height: 36px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .parker-car--bonk {
-    animation-duration: 1ms;
+  .parker-house {
+    top: 39%;
+    width: 88%;
   }
 }

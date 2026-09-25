@@ -1,392 +1,461 @@
-.find-floor-game {
-  width: min(100%, 960px);
+.elevator-hunt-game {
+  width: min(100%, 1120px);
   height: 100dvh;
-  max-height: 100dvh;
+
   margin: 0 auto;
-  padding: 10px 24px 14px;
+  padding: 18px 24px 22px;
+
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  gap: 8px;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  gap: 16px;
+
   overflow: hidden;
+
+  background: #fffaf0;
+  color: #171717;
 }
 
-.find-floor-topbar {
+.elevator-hunt-topbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  grid-template-columns:
+    110px
+    1fr
+    110px;
+
   gap: 12px;
-}
-
-.find-floor-topbar h1 {
-  margin: 0;
-  font-size: clamp(2.1rem, 4.8vh, 3.6rem);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  text-align: center;
-}
-
-.find-floor-home,
-.find-floor-reset,
-.find-floor-mode {
-  min-height: 42px;
-  padding: 6px 14px;
-  border: 4px solid var(--ink);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 
-    inset 0 3px 0px rgba(255, 255, 255, 0.8), 
-    inset 0 -3px 0px rgba(0, 0, 0, 0.1),
-    0 4px 0 rgb(42 33 24 / 15%);
-  text-decoration: none;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-
-.find-floor-home { justify-self: start; }
-.find-floor-reset { justify-self: end; }
-
-.find-floor-home:active,
-.find-floor-reset:active,
-.find-floor-mode:active {
-  transform: translateY(4px);
-  box-shadow: 
-    inset 0 1px 0px rgba(255, 255, 255, 0.8), 
-    inset 0 -1px 0px rgba(0, 0, 0, 0.1),
-    0 0px 0 rgb(42 33 24 / 15%);
-}
-
-.find-floor-hud {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 10px;
 }
 
-.find-floor-score {
-  min-width: 94px;
-  padding: 5px 10px;
-  border: 4px solid var(--ink);
-  border-radius: 18px;
-  background: var(--paper);
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+.elevator-hunt-topbar h1 {
+  margin: 0;
   text-align: center;
+  font-size: clamp(2rem, 5vh, 4.1rem);
+  line-height: .9;
+  text-transform: uppercase;
+  letter-spacing: -.055em;
 }
 
-.find-floor-score span {
-  display: block;
-  font-size: 0.62rem;
-  line-height: 1;
+.elevator-hunt-home,
+.elevator-hunt-reset {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 7px 12px;
+  border: 3px solid #171717;
+  border-radius: 14px 12px 15px 13px;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 #171717;
+  color: #171717;
+  text-decoration: none;
 }
 
-.find-floor-score strong {
-  display: block;
-  margin-top: 3px;
-  font-size: 1.15rem;
-  line-height: 1;
+.elevator-hunt-home:active,
+.elevator-hunt-reset:active {
+  transform: translate(3px, 4px);
+  box-shadow: none;
 }
 
-.find-floor-status {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 6px 16px;
-  border: 4px solid var(--ink);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffe285 0%, var(--sun) 100%);
-  box-shadow: 
-    inset 0 3px 0px rgba(255, 255, 255, 0.4), 
-    inset 0 -3px 0px rgba(0, 0, 0, 0.15),
-    0 4px 0 rgb(42 33 24 / 15%);
-  text-align: center;
-  font-size: 0.82rem;
-}
-
-.find-floor-status--win {
-  background: linear-gradient(135deg, #6bcf8f 0%, var(--leaf) 100%);
-  color: var(--white);
-  text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
-}
-
-.find-floor-stage {
+.elevator-hunt-stage {
   position: relative;
   min-height: 0;
   overflow: hidden;
-  border: 5px solid var(--ink);
-  border-radius: 28px;
-  background: var(--paper);
-  box-shadow: 0 6px 0 rgb(42 33 24 / 15%);
+  border: 4px solid #171717;
+  border-radius: 22px 18px 24px 19px;
+  background-color: #fffdf8;
 }
 
-.find-floor-level {
+.elevator-hunt-score-card {
   position: absolute;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  border-top: 4px solid var(--ink);
-}
-
-.find-floor-level:nth-child(odd) {
-  background: var(--paper);
-}
-
-.find-floor-level:nth-child(even) {
-  background: color-mix(in srgb, var(--sun) 14%, var(--paper));
-}
-
-.find-floor-level--top { border-top: 0; }
-
-.find-floor-tag {
-  position: relative;
-  z-index: 5;
-  flex: 0 0 auto;
-  width: 48px;
-  margin-left: 8px;
+  z-index: 40;
+  top: 14px;
+  min-width: 118px;
+  min-height: 72px;
   display: grid;
   place-items: center;
-  font-size: clamp(1rem, 2.5vh, 1.45rem);
+  padding: 8px 12px;
+  border: 3px solid #171717;
+  border-radius: 18px 14px 17px 13px;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 #171717;
+  text-align: center;
+}
+
+.elevator-hunt-score-card--left {
+  left: 14px;
+}
+
+.elevator-hunt-score-card--right {
+  right: 14px;
+}
+
+.elevator-hunt-score-card span {
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.elevator-hunt-score-card strong {
+  font-size: 1.32rem;
   line-height: 1;
 }
 
-.find-floor-tag--here {
-  color: var(--tomato);
-  transform: scale(1.18);
-  font-weight: 900;
+.elevator-hunt-center-controls {
+  position: absolute;
+  z-index: 45;
+  top: 14px;
+  left: 50%;
+  width: min(580px, 56%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
 }
 
-.find-floor-shaft {
+.elevator-hunt-status {
+  margin: 0;
+  padding: 8px 16px;
+  border: 3px solid #171717;
+  border-radius: 999px;
+  background: #ffe33b;
+  box-shadow: 3px 4px 0 #171717;
+  font-size: .83rem;
+  letter-spacing: .02em;
+  text-align: center;
+}
+
+.elevator-hunt-status--good {
+  background: #72d64d;
+}
+
+.elevator-hunt-status--bad {
+  background: #ff8cae;
+}
+
+.elevator-hunt-scale-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 3px solid #171717;
+  border-radius: 15px 12px 16px 13px;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 #171717;
+}
+
+.elevator-hunt-scale-picker > span {
+  font-size: .68rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.elevator-hunt-scale-picker > div {
+  display: flex;
+  gap: 5px;
+}
+
+.elevator-hunt-scale-picker button {
+  min-width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+  border: 2px solid #171717;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #171717;
+  box-shadow: 1px 2px 0 #171717;
+  font-size: .76rem;
+}
+
+.elevator-hunt-scale-picker button.is-active {
+  background: #20b9df;
+  transform: translateY(-2px);
+}
+
+.elevator-hunt-building {
   position: absolute;
-  z-index: 2;
+  left: 14px;
+  right: 14px;
+  top: 116px;
+  bottom: 118px;
+}
+
+.elevator-hunt-aim-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 110px;
+  border-left: 3px dashed rgb(23 23 23 / .12);
+  pointer-events: none;
+}
+
+.elevator-hunt-levels {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: repeat(var(--level-count), minmax(0, 1fr));
+}
+
+.elevator-hunt-level {
+  display: grid;
+  grid-template-columns: 54px 104px minmax(0, 1fr);
+  align-items: stretch;
+  border-top: 4px solid rgb(23 23 23 / .55);
+}
+
+.elevator-hunt-level:first-child {
+  border-top: 0;
+}
+
+.elevator-hunt-level-tag {
+  display: grid;
+  place-items: center;
+  font-size: clamp(.9rem, 2vh, 1.25rem);
+  font-weight: 700;
+}
+
+/* Ground gets its own color band and a bold, differently-colored line
+   above it - this is the "start counting here" boundary, so it needs
+   to read as obviously different from every floor-to-floor line. */
+.elevator-hunt-level--ground {
+  background: rgb(255 93 143 / .16);
+  border-top: 7px solid #ff5d8f;
+}
+
+.elevator-hunt-level--ground .elevator-hunt-level-tag {
+  color: #fffdf8;
+  background: #ff5d8f;
+  border: 3px solid #171717;
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  box-shadow: 2px 3px 0 #171717;
+}
+
+.elevator-hunt-shaft {
+  position: absolute;
+  z-index: 8;
   top: 0;
   bottom: 0;
   left: 54px;
-  width: 90px;
-  border-left: 5px solid var(--ink);
-  border-right: 5px solid var(--ink);
-  background: var(--sun);
+  width: 104px;
+  border-left: 4px solid #171717;
+  border-right: 4px solid #171717;
+  background: rgb(255 227 59 / .22);
 }
 
-.find-floor-shaft::after {
+.elevator-hunt-shaft::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 4px;
-  background: var(--ink);
-  opacity: 0.12;
+  width: 3px;
+  background: rgb(23 23 23 / .12);
   transform: translateX(-50%);
 }
 
-.find-floor-car {
+.elevator-hunt-car {
   position: absolute;
-  z-index: 4;
-  left: 59px;
-  width: 80px;
-  display: flex;
+  z-index: 12;
+  left: 9px;
+  right: 9px;
   overflow: hidden;
-  border: 5px solid var(--ink);
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4dcaff 0%, var(--sea) 100%);
-  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+  border: 4px solid #171717;
+  border-radius: 16px;
+  background: #20b9df;
+  box-shadow: 3px 4px 0 #171717;
 }
 
-.find-floor-door {
-  flex: 1;
-  background: var(--sea);
+.elevator-hunt-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: #20b9df;
   transition: transform 240ms cubic-bezier(.2, .9, .3, 1.2);
 }
 
-.find-floor-door--left { border-right: 3px solid var(--ink); }
-.find-floor-car--open .find-floor-door--left { transform: translateX(-100%); }
-.find-floor-car--open .find-floor-door--right { transform: translateX(100%); }
-
-.find-floor-room {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  margin-left: 106px;
-  position: relative;
+.elevator-hunt-door--left {
+  left: 0;
+  border-right: 3px solid #171717;
 }
 
-.find-floor-room--occupied {
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border: 4px solid var(--ink);
-  border-radius: 20px;
-  background: var(--sun);
-  box-shadow: 
-    inset 0 4px 0px rgba(255, 255, 255, 0.4), 
-    0 4px 0 rgb(42 33 24 / 15%);
+.elevator-hunt-door--right {
+  right: 0;
 }
 
-.find-floor-prize-spot {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+.elevator-hunt-car.is-open .elevator-hunt-door--left {
+  transform: translateX(-100%);
 }
 
-.find-floor-prize {
-  position: relative;
-  z-index: 3;
-  max-width: 44%;
-  max-height: 82%;
-  margin-bottom: 7px;
-  transform-origin: bottom center;
-  mix-blend-mode: multiply;
+.elevator-hunt-car.is-open .elevator-hunt-door--right {
+  transform: translateX(100%);
 }
 
-.find-floor-prize--won {
-  animation: find-floor-collect 650ms cubic-bezier(.2, 1.4, .4, 1) forwards;
-}
-
-@keyframes find-floor-collect {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.24) rotate(-7deg); }
-  100% { transform: translateX(-70px) scale(0.45); opacity: 0; }
-}
-
-.find-floor-prize-shelf {
+.elevator-hunt-car-character {
   position: absolute;
   z-index: 2;
-  left: 12%;
-  right: 12%;
-  bottom: 7px;
-  height: 8px;
-  border: 3px solid var(--ink);
-  border-radius: 999px;
-  background: var(--tomato);
+  left: 50%;
+  bottom: 6%;
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  transform: translateX(-50%);
 }
 
-.find-floor-prize-number {
+.elevator-hunt-room {
+  position: relative;
+  margin: 5px 0 5px 10px;
+  border-radius: 20px;
+}
+
+.elevator-hunt-room--occupied {
+  border: 3px solid #171717;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 rgb(23 23 23 / .16);
+}
+
+.elevator-hunt-character-spot {
   position: absolute;
-  z-index: 4;
-  left: 12px;
-  top: 50%;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 4px solid var(--ink);
-  border-radius: 50%;
-  background: var(--paper);
-  font-size: 1.55rem;
-  line-height: 1;
-  transform: translateY(-50%);
-  box-shadow: 0 3px 0 rgb(42 33 24 / 15%);
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-.find-floor-keys {
+.elevator-hunt-character {
+  max-width: min(78%, 124px);
+  max-height: 88%;
+  object-fit: contain;
+  display: block;
+}
+
+.elevator-hunt-keypad-wrap {
+  position: absolute;
+  z-index: 25;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+}
+
+.elevator-hunt-keypad {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  min-height: 0;
 }
 
-.find-floor-key {
-  min-width: 0;
-  min-height: 74px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border: 4px solid var(--ink);
-  border-radius: 20px;
-  background: linear-gradient(135deg, #ffb5c6 0%, var(--blush) 100%);
-  color: var(--ink);
-  box-shadow: 
-    inset 0 4px 0px rgba(255, 255, 255, 0.4), 
-    inset 0 -4px 0px rgba(0, 0, 0, 0.15),
-    0 4px 0 rgb(42 33 24 / 15%);
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: transform 0.1s, box-shadow 0.1s;
+.elevator-hunt-key {
+  min-height: 56px;
+  padding: 4px;
+  border: 3px solid #171717;
+  border-radius: 18px 14px 17px 13px;
+  background: #fffdf8;
+  color: #171717;
+  box-shadow: 3px 4px 0 #171717;
+  font-size: clamp(.95rem, 2vw, 1.2rem);
 }
 
-.find-floor-key:nth-child(2) { background: linear-gradient(135deg, #ffe285 0%, var(--sun) 100%); }
-.find-floor-key:nth-child(3) { background: linear-gradient(135deg, #4dcaff 0%, var(--sea) 100%); }
-.find-floor-key:nth-child(4) { background: linear-gradient(135deg, #ffe285 0%, var(--sun) 100%); }
-.find-floor-key:nth-child(5) { background: linear-gradient(135deg, #ffb5c6 0%, var(--blush) 100%); }
-
-.find-floor-key:disabled { opacity: 0.4; }
-
-.find-floor-key:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 
-    inset 0 2px 0px rgba(255, 255, 255, 0.4), 
-    inset 0 -2px 0px rgba(0, 0, 0, 0.15),
-    0 0px 0 rgb(42 33 24 / 15%);
+.elevator-hunt-key.is-selected {
+  background: #20b9df;
 }
 
-.find-floor-key-number {
-  font-size: clamp(1.4rem, 3vh, 2rem);
-  line-height: 1;
+.elevator-hunt-key:disabled {
+  opacity: .66;
 }
 
-.find-floor-dots {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 3px;
-  max-width: 60px;
+.elevator-hunt-key:active:not(:disabled) {
+  transform: translate(3px, 4px);
+  box-shadow: none;
 }
 
-.find-floor-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ink);
+.elevator-hunt-feedback {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%) rotate(-5deg);
+  font-size: clamp(2.8rem, 8vw, 5.8rem);
+  line-height: .85;
+  -webkit-text-stroke: 3px #171717;
+  paint-order: stroke fill;
+  pointer-events: none;
 }
 
-.find-floor-mode {
-  justify-self: center;
-  min-height: 36px;
-  padding: 5px 14px;
-  font-size: 0.75rem;
+.elevator-hunt-feedback--good {
+  color: #72d64d;
 }
 
-@media (max-height: 700px) {
-  .find-floor-game { padding-top: 6px; padding-bottom: 8px; gap: 5px; }
-  .find-floor-topbar h1 { font-size: 2rem; }
-  .find-floor-home, .find-floor-reset { min-height: 36px; padding: 4px 10px; font-size: 0.7rem; }
-  .find-floor-score { min-width: 78px; padding: 4px 7px; }
-  .find-floor-status { padding: 4px 11px; font-size: 0.7rem; }
-  .find-floor-key { min-height: 58px; }
-  .find-floor-key-number { font-size: 1.45rem; }
-  .find-floor-mode { min-height: 32px; }
-  .find-floor-room--occupied { margin-top: 3px; margin-bottom: 3px; }
-  .find-floor-prize-number { width: 36px; height: 36px; font-size: 1.25rem; }
-  .find-floor-prize { max-height: 78%; }
+.elevator-hunt-feedback--bad {
+  color: #ffe33b;
 }
 
-@media (max-width: 700px) {
-  .find-floor-game { padding-left: 8px; padding-right: 8px; }
-  .find-floor-topbar { gap: 5px; }
-  .find-floor-topbar h1 { font-size: clamp(1.55rem, 7vw, 2.2rem); }
-  .find-floor-home, .find-floor-reset { padding-left: 7px; padding-right: 7px; font-size: 0.64rem; }
-  .find-floor-hud { gap: 5px; }
-  .find-floor-score { min-width: 60px; }
-  .find-floor-score span { font-size: 0.5rem; }
-  .find-floor-score strong { font-size: 0.85rem; }
-  .find-floor-status { font-size: 0.62rem; }
-  .find-floor-tag { width: 30px; margin-left: 3px; }
-  .find-floor-shaft { left: 34px; width: 60px; }
-  .find-floor-car { left: 39px; width: 50px; }
-  .find-floor-room { margin-left: 72px; }
-  .find-floor-prize { max-width: 48%; }
-  .find-floor-keys { gap: 4px; }
-  .find-floor-key { min-height: 52px; border-width: 3px; border-radius: 14px; }
-  .find-floor-dot { width: 5px; height: 5px; }
+@media (max-width: 900px) {
+  .elevator-hunt-center-controls {
+    width: 50%;
+  }
+
+  .elevator-hunt-building {
+    top: 126px;
+  }
+
+  .elevator-hunt-room {
+    margin-left: 8px;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .find-floor-prize--won { animation-duration: 1ms; }
-  .find-floor-door { transition-duration: 1ms; }
+@media (max-width: 720px) {
+  .elevator-hunt-game {
+    padding: 12px;
+  }
+
+  .elevator-hunt-topbar {
+    grid-template-columns: 84px 1fr 96px;
+  }
+
+  .elevator-hunt-center-controls {
+    top: 94px;
+    width: 92%;
+  }
+
+  .elevator-hunt-score-card {
+    top: 14px;
+    min-width: 90px;
+    min-height: 60px;
+  }
+
+  .elevator-hunt-building {
+    top: 156px;
+    bottom: 134px;
+  }
+
+  .elevator-hunt-level {
+    grid-template-columns: 38px 78px minmax(0, 1fr);
+  }
+
+  .elevator-hunt-aim-line {
+    left: 77px;
+  }
+
+  .elevator-hunt-shaft {
+    left: 38px;
+    width: 78px;
+  }
+
+  .elevator-hunt-car {
+    left: 6px;
+    right: 6px;
+  }
+
+  .elevator-hunt-character {
+    max-width: min(88%, 74px);
+  }
+
+  .elevator-hunt-keypad {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

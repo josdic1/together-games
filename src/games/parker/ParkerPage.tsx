@@ -1,404 +1,668 @@
 import {
-  useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react'
 import { Link } from 'react-router-dom'
+
+import { playTap, playCorrect, playWrong } from '../../shared/sound'
+
 import './ParkerPage.css'
 
 type Phase =
-  | 'sliding'
+  | 'moving'
   | 'driving'
   | 'parked'
-  | 'bumping'
+  | 'bonk'
 
-type Outcome =
-  | 'perfect'
-  | 'parked'
-  | 'bump'
-  | null
+type DoorMode =
+  | 0
+  | 1
+  | 2
+  | 3
+  | 4
 
-/*
- * Horizontal values are percentages of the stage width.
- * Vertical values are percentages of the stage height.
- * This keeps the game playable at any viewport height.
- */
-const GARAGE_TOP = 3
-const GARAGE_BOTTOM = 49
-const GARAGE_LEFT = 20
-const GARAGE_WIDTH = 60
+type DoorSetting = {
+  value: DoorMode
+  label: string
+  cycleMs: number
+}
 
-const OPENING_TOP = 24
-const OPENING_WIDTH = 34
+const SPEEDS = [
+  7,
+  10,
+  14,
+  19,
+  25,
+] as const
 
-const CAR_WIDTH = 15
-const CAR_HEIGHT = 10.5
-
-const ROAD_Y = 86
-const CAR_ROAD_TOP =
-  ROAD_Y - CAR_HEIGHT
-
-const CAR_PARK_TOP = 29
-const CAR_GATE_TOP = GARAGE_BOTTOM
-
-const DRIVE_SPEED = 78
-
-const FIT_MARGIN =
-  (OPENING_WIDTH - CAR_WIDTH) / 2
-
-const PERFECT_MARGIN = 3
-
-const CHECKPOINT_EVERY = 5
-
-const PARK_HOLD = 520
-const BUMP_HOLD = 620
-
-const MIN_X = 16
-const MAX_X = 84
-
-const speeds = {
-  little: {
-    base: 16,
-    step: 0.8,
-    max: 34,
+const DOOR_SETTINGS: DoorSetting[] = [
+  {
+    value: 0,
+    label: 'OPEN',
+    cycleMs: 0,
   },
-  big: {
-    base: 26,
-    step: 2.2,
-    max: 68,
+  {
+    value: 1,
+    label: 'LONG',
+    cycleMs: 18000,
   },
+  {
+    value: 2,
+    label: 'MID',
+    cycleMs: 10000,
+  },
+  {
+    value: 3,
+    label: 'SHORT',
+    cycleMs: 6000,
+  },
+  {
+    value: 4,
+    label: 'FAST',
+    cycleMs: 3500,
+  },
+]
+
+const MIN_X = 11
+const MAX_X = 89
+
+const GARAGE_X = 59
+const ENTRY_MARGIN = 6.5
+
+const START_TOP = 88
+const PARK_TOP = 60
+const BUMP_TOP = 65
+
+const DRIVE_SPEED = 25
+const DOOR_READY = 0.66
+
+const SPEED_KEY =
+  'together-games:parker-speed-v3'
+
+const DOOR_KEY =
+  'together-games:parker-door-v3'
+
+const BEST_KEY =
+  'together-games:parker-best'
+
+function getSavedBest() {
+  const saved = Number(
+    window.localStorage.getItem(
+      BEST_KEY,
+    ),
+  )
+
+  return Number.isFinite(saved) &&
+    saved > 0
+    ? saved
+    : 0
+}
+
+function getSavedSpeed() {
+  const saved = Number(
+    window.localStorage.getItem(
+      SPEED_KEY,
+    ),
+  )
+
+  if (
+    Number.isInteger(saved) &&
+    saved >= 1 &&
+    saved <= 5
+  ) {
+    return saved
+  }
+
+  return 1
+}
+
+function getSavedDoor(): DoorMode {
+  const saved = Number(
+    window.localStorage.getItem(
+      DOOR_KEY,
+    ),
+  )
+
+  if (
+    Number.isInteger(saved) &&
+    saved >= 0 &&
+    saved <= 4
+  ) {
+    return saved as DoorMode
+  }
+
+  return 0
+}
+
+function getDoorOpenness(
+  elapsed: number,
+  cycle: number,
+) {
+  const progress =
+    (elapsed % cycle) /
+    cycle
+
+  /*
+   * 45% open
+   * 10% closing
+   * 35% closed
+   * 10% opening
+   */
+  if (progress < 0.45) {
+    return 1
+  }
+
+  if (progress < 0.55) {
+    return (
+      1 -
+      (
+        progress -
+        0.45
+      ) /
+        0.1
+    )
+  }
+
+  if (progress < 0.9) {
+    return 0
+  }
+
+  return (
+    (
+      progress -
+      0.9
+    ) /
+    0.1
+  )
 }
 
 export default function ParkerPage() {
-  const [parked, setParked] =
-    useState(0)
+  const [
+    score,
+    setScore,
+  ] = useState(0)
 
-  const [best, setBest] =
-    useState(0)
+  const [
+    best,
+    setBest,
+  ] = useState(getSavedBest)
 
-  const [phase, setPhase] =
-    useState<Phase>('sliding')
-
-  const [carX, setCarX] =
-    useState(50)
-
-  const [driveX, setDriveX] =
-    useState(50)
-
-  const [carY, setCarY] =
-    useState(CAR_ROAD_TOP)
-
-  const [outcome, setOutcome] =
-    useState<Outcome>(null)
-
-  const [player, setPlayer] =
-    useState<1 | 2>(1)
-
-  const [mode, setMode] =
-    useState<'little' | 'big'>(
-      'little',
-    )
-
-  const carXRef = useRef(50)
-  const directionRef = useRef(1)
-
-  const tune = speeds[mode]
-
-  const swaySpeed = Math.min(
-    tune.base +
-      parked * tune.step,
-    tune.max,
+  const [
+    phase,
+    setPhase,
+  ] = useState<Phase>(
+    'moving',
   )
 
-  /*
-   * Five garage windows show progress
-   * toward the next safe checkpoint.
-   */
-  const lit =
-    parked === 0
-      ? 0
-      : ((parked - 1) %
-          CHECKPOINT_EVERY) +
-        1
+  const [
+    speedLevel,
+    setSpeedLevel,
+  ] = useState(
+    getSavedSpeed,
+  )
 
-  const finishDrive =
-    useCallback(() => {
-      const offset =
-        Math.abs(driveX - 50)
+  const [
+    doorMode,
+    setDoorMode,
+  ] = useState<DoorMode>(
+    getSavedDoor,
+  )
 
-      if (offset > FIT_MARGIN) {
-        setOutcome('bump')
+  const [
+    carX,
+    setCarX,
+  ] = useState(28)
 
-        setParked((current) =>
-          Math.floor(
-            current /
-              CHECKPOINT_EVERY,
-          ) *
-          CHECKPOINT_EVERY,
-        )
-
-        setPhase('bumping')
-        return
-      }
-
-      const next = parked + 1
-
-      setOutcome(
-        offset <= PERFECT_MARGIN
-          ? 'perfect'
-          : 'parked',
-      )
-
-      setParked(next)
-
-      setBest((current) =>
-        Math.max(current, next),
-      )
-
-      setPhase('parked')
-    }, [driveX, parked])
-
-  /*
-   * Car moves left and right while
-   * waiting for the player.
-   */
-  useEffect(() => {
-    if (phase !== 'sliding') {
-      return
-    }
-
-    let frameId = 0
-    let last = performance.now()
-
-    function frame(now: number) {
-      const step = Math.min(
-        (now - last) / 1000,
-        0.05,
-      )
-
-      last = now
-
-      let x =
-        carXRef.current +
-        directionRef.current *
-          swaySpeed *
-          step
-
-      if (x <= MIN_X) {
-        x = MIN_X
-        directionRef.current = 1
-      }
-
-      if (x >= MAX_X) {
-        x = MAX_X
-        directionRef.current = -1
-      }
-
-      carXRef.current = x
-      setCarX(x)
-
-      frameId =
-        window.requestAnimationFrame(
-          frame,
-        )
-    }
-
-    frameId =
-      window.requestAnimationFrame(
-        frame,
-      )
-
-    return () =>
-      window.cancelAnimationFrame(
-        frameId,
-      )
-  }, [phase, swaySpeed])
-
-  /*
-   * Once PARK is pressed, the car
-   * drives straight toward the garage.
-   */
-  useEffect(() => {
-    if (phase !== 'driving') {
-      return
-    }
-
-    const fits =
-      Math.abs(driveX - 50) <=
-      FIT_MARGIN
-
-    const target = fits
-      ? CAR_PARK_TOP
-      : CAR_GATE_TOP
-
-    let frameId = 0
-    let last = performance.now()
-    let y = CAR_ROAD_TOP
-
-    function frame(now: number) {
-      const step = Math.min(
-        (now - last) / 1000,
-        0.05,
-      )
-
-      last = now
-
-      y -= DRIVE_SPEED * step
-
-      if (y <= target) {
-        setCarY(target)
-        finishDrive()
-        return
-      }
-
-      setCarY(y)
-
-      frameId =
-        window.requestAnimationFrame(
-          frame,
-        )
-    }
-
-    frameId =
-      window.requestAnimationFrame(
-        frame,
-      )
-
-    return () =>
-      window.cancelAnimationFrame(
-        frameId,
-      )
-  }, [
-    phase,
+  const [
     driveX,
-    finishDrive,
-  ])
+    setDriveX,
+  ] = useState(28)
 
-  /*
-   * After either result, switch
-   * players and bring the car back.
-   */
-  useEffect(() => {
+  const [
+    carTop,
+    setCarTop,
+  ] = useState(
+    START_TOP,
+  )
+
+  const [
+    doorOpen,
+    setDoorOpen,
+  ] = useState(1)
+
+  const carXRef =
+    useRef(28)
+
+  const directionRef =
+    useRef(1)
+
+  const phaseRef =
+    useRef<Phase>(
+      'moving',
+    )
+
+  const doorOpenRef =
+    useRef(1)
+
+  const feedbackTimerRef =
+    useRef<number | null>(
+      null,
+    )
+
+  const speed =
+    SPEEDS[
+      speedLevel - 1
+    ]
+
+  const doorSetting =
+    DOOR_SETTINGS.find(
+      (setting) =>
+        setting.value ===
+        doorMode,
+    ) ??
+    DOOR_SETTINGS[0]
+
+  function setGamePhase(
+    next: Phase,
+  ) {
+    phaseRef.current =
+      next
+
+    setPhase(next)
+  }
+
+  function chooseSpeed(
+    level: number,
+  ) {
+    setSpeedLevel(level)
+
+    window.localStorage.setItem(
+      SPEED_KEY,
+      String(level),
+    )
+  }
+
+  function chooseDoor(
+    mode: DoorMode,
+  ) {
+    setDoorMode(mode)
+
+    window.localStorage.setItem(
+      DOOR_KEY,
+      String(mode),
+    )
+  }
+
+  function resetRound() {
+    setCarTop(
+      START_TOP,
+    )
+
+    setDriveX(
+      carXRef.current,
+    )
+
+    setGamePhase(
+      'moving',
+    )
+  }
+
+  function park() {
     if (
-      phase !== 'parked' &&
-      phase !== 'bumping'
+      phaseRef.current !==
+      'moving'
     ) {
       return
     }
 
-    const wait =
-      phase === 'parked'
-        ? PARK_HOLD
-        : BUMP_HOLD
+    playTap()
 
-    const timer =
-      window.setTimeout(() => {
-        setPlayer((current) =>
-          current === 1 ? 2 : 1,
-        )
+    setDriveX(
+      carXRef.current,
+    )
 
-        setOutcome(null)
-        setCarY(CAR_ROAD_TOP)
-        setPhase('sliding')
-      }, wait)
+    setCarTop(
+      START_TOP,
+    )
 
-    return () =>
-      window.clearTimeout(timer)
-  }, [phase])
-
-  function park() {
-    if (phase !== 'sliding') {
-      return
-    }
-
-    const x = carXRef.current
-
-    setDriveX(x)
-    setCarY(CAR_ROAD_TOP)
-    setPhase('driving')
+    setGamePhase(
+      'driving',
+    )
   }
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
+  useEffect(
+    () => {
       if (
-        event.code !== 'Space' ||
-        event.repeat
+        doorMode === 0
+      ) {
+        doorOpenRef.current = 1
+        setDoorOpen(1)
+        return
+      }
+
+      const started =
+        performance.now()
+
+      let frameId = 0
+
+      function frame(
+        now: number,
+      ) {
+        const openness =
+          getDoorOpenness(
+            now - started,
+            doorSetting.cycleMs,
+          )
+
+        doorOpenRef.current =
+          openness
+
+        setDoorOpen(
+          openness,
+        )
+
+        frameId =
+          window.requestAnimationFrame(
+            frame,
+          )
+      }
+
+      frameId =
+        window.requestAnimationFrame(
+          frame,
+        )
+
+      return () => {
+        window.cancelAnimationFrame(
+          frameId,
+        )
+      }
+    },
+    [
+      doorMode,
+      doorSetting.cycleMs,
+    ],
+  )
+
+  useEffect(
+    () => {
+      if (
+        phase !== 'moving'
       ) {
         return
       }
 
-      event.preventDefault()
-      park()
-    }
+      let frameId = 0
+      let last =
+        performance.now()
 
-    window.addEventListener(
-      'keydown',
-      handleKeyDown,
-    )
+      function frame(
+        now: number,
+      ) {
+        const elapsed =
+          Math.min(
+            (
+              now -
+              last
+            ) /
+              1000,
+            0.05,
+          )
 
-    return () => {
-      window.removeEventListener(
+        last = now
+
+        let next =
+          carXRef.current +
+          directionRef.current *
+            speed *
+            elapsed
+
+        if (
+          next <= MIN_X
+        ) {
+          next = MIN_X
+          directionRef.current = 1
+        }
+
+        if (
+          next >= MAX_X
+        ) {
+          next = MAX_X
+          directionRef.current = -1
+        }
+
+        carXRef.current =
+          next
+
+        setCarX(next)
+
+        frameId =
+          window.requestAnimationFrame(
+            frame,
+          )
+      }
+
+      frameId =
+        window.requestAnimationFrame(
+          frame,
+        )
+
+      return () => {
+        window.cancelAnimationFrame(
+          frameId,
+        )
+      }
+    },
+    [
+      phase,
+      speed,
+    ],
+  )
+
+  useEffect(
+    () => {
+      if (
+        phase !== 'driving'
+      ) {
+        return
+      }
+
+      let frameId = 0
+      let last =
+        performance.now()
+
+      let nextTop =
+        START_TOP
+
+      function frame(
+        now: number,
+      ) {
+        const elapsed =
+          Math.min(
+            (
+              now -
+              last
+            ) /
+              1000,
+            0.05,
+          )
+
+        last = now
+
+        nextTop -=
+          DRIVE_SPEED *
+          elapsed
+
+        if (
+          nextTop >
+          PARK_TOP
+        ) {
+          setCarTop(
+            nextTop,
+          )
+
+          frameId =
+            window.requestAnimationFrame(
+              frame,
+            )
+
+          return
+        }
+
+        const aligned =
+          Math.abs(
+            driveX -
+              GARAGE_X,
+          ) <=
+          ENTRY_MARGIN
+
+        const doorReady =
+          doorOpenRef.current >=
+          DOOR_READY
+
+        if (
+          aligned &&
+          doorReady
+        ) {
+          playCorrect()
+
+          setCarTop(
+            PARK_TOP,
+          )
+
+          const nextScore =
+            score + 1
+
+          setScore(
+            nextScore,
+          )
+
+          setBest(
+            (current) => {
+              const nextBest =
+                Math.max(
+                  current,
+                  nextScore,
+                )
+
+              if (
+                nextBest >
+                current
+              ) {
+                window.localStorage.setItem(
+                  BEST_KEY,
+                  String(nextBest),
+                )
+              }
+
+              return nextBest
+            },
+          )
+
+          setGamePhase(
+            'parked',
+          )
+
+          feedbackTimerRef.current =
+            window.setTimeout(
+              resetRound,
+              700,
+            )
+
+          return
+        }
+
+        playWrong()
+
+        setCarTop(
+          BUMP_TOP,
+        )
+
+        setGamePhase(
+          'bonk',
+        )
+
+        feedbackTimerRef.current =
+          window.setTimeout(
+            () => {
+              // Missing the garage just resets the round - one bad
+              // parking attempt shouldn't wipe the whole score.
+              resetRound()
+            },
+            800,
+          )
+      }
+
+      frameId =
+        window.requestAnimationFrame(
+          frame,
+        )
+
+      return () => {
+        window.cancelAnimationFrame(
+          frameId,
+        )
+      }
+    },
+    [
+      phase,
+      driveX,
+      score,
+    ],
+  )
+
+  useEffect(
+    () => {
+      function handleKeyDown(
+        event: KeyboardEvent,
+      ) {
+        if (
+          event.code !==
+            'Space' ||
+          event.repeat
+        ) {
+          return
+        }
+
+        event.preventDefault()
+        park()
+      }
+
+      window.addEventListener(
         'keydown',
         handleKeyDown,
       )
-    }
-  }, [phase])
 
-  function toggleMode() {
-    setMode((current) =>
-      current === 'little'
-        ? 'big'
-        : 'little',
-    )
-  }
+      return () => {
+        window.removeEventListener(
+          'keydown',
+          handleKeyDown,
+        )
+      }
+    },
+    [],
+  )
 
-  function resetGame() {
-    carXRef.current = 50
-    directionRef.current = 1
+  useEffect(
+    () => {
+      return () => {
+        if (
+          feedbackTimerRef.current
+        ) {
+          window.clearTimeout(
+            feedbackTimerRef.current,
+          )
+        }
+      }
+    },
+    [],
+  )
 
-    setParked(0)
-    setOutcome(null)
-
-    setCarX(50)
-    setDriveX(50)
-    setCarY(CAR_ROAD_TOP)
-
-    setPhase('sliding')
-    setPlayer(1)
-  }
-
-  function statusText() {
-    if (phase === 'driving') {
-      return 'Here we go!'
-    }
-
-    if (phase === 'bumping') {
-      return 'BONK!'
-    }
-
-    if (phase === 'parked') {
-      return outcome === 'perfect'
-        ? 'Perfect park!'
-        : 'Parked it!'
-    }
-
-    if (parked === 0) {
-      return `Player ${player} — line it up!`
-    }
-
-    return `Player ${player} — park it!`
-  }
-
-  const carLeft =
-    phase === 'sliding'
-      ? carX
-      : driveX
-
-  const carTop =
-    phase === 'sliding'
-      ? CAR_ROAD_TOP
-      : carY
+  const doorText =
+    doorMode === 0
+      ? 'DOOR STAYS OPEN'
+      : `${doorSetting.label} DOOR`
 
   return (
     <main className="parker-game">
@@ -410,185 +674,230 @@ export default function ParkerPage() {
           ← Games
         </Link>
 
-        <h1>Parker</h1>
+        <h1>
+          Parker
+        </h1>
 
-        <button
-          className="parker-reset"
-          onClick={resetGame}
-        >
-          Reset
-        </button>
+        <div
+          className="parker-topbar-spacer"
+          aria-hidden="true"
+        />
       </header>
 
       <section
-        className="parker-hud"
-        aria-label="Players"
-      >
-        <div
-          className={`parker-player parker-player--one ${
-            player === 1
-              ? 'is-active'
-              : ''
-          }`}
-        >
-          <span>Player 1</span>
-
-          {player === 1 && (
-            <strong>
-              Your turn!
-            </strong>
-          )}
-        </div>
-
-        <div className="parker-stats">
-          <span>
-            Parked
-            <strong>
-              {parked}
-            </strong>
-          </span>
-
-          <span>
-            Best
-            <strong>
-              {best}
-            </strong>
-          </span>
-        </div>
-
-        <div
-          className={`parker-player parker-player--two ${
-            player === 2
-              ? 'is-active'
-              : ''
-          }`}
-        >
-          <span>Player 2</span>
-
-          {player === 2 && (
-            <strong>
-              Your turn!
-            </strong>
-          )}
-        </div>
-      </section>
-
-      <p
-        className={`parker-status ${
-          outcome === 'bump'
-            ? 'parker-status--warn'
-            : ''
-        }`}
-        aria-live="polite"
-      >
-        {statusText()}
-      </p>
-
-      <section
         className="parker-stage"
-        aria-label="Parking garage"
+        onPointerDown={park}
+        aria-label="Parker. Tap anywhere to park Jim Baby."
       >
-        <div
-          className="parker-garage"
-          style={{
-            left: `${GARAGE_LEFT}%`,
-            width: `${GARAGE_WIDTH}%`,
-            top: `${GARAGE_TOP}%`,
-            height: `${
-              GARAGE_BOTTOM -
-              GARAGE_TOP
-            }%`,
-          }}
-        >
+        <div className="parker-jim-card">
+          <img
+            src="/art/parker/jim-baby.png"
+            alt=""
+            draggable={false}
+          />
+
+          <div>
+            <span>
+              PARKED
+            </span>
+
+            <strong>
+              JIM BABY
+            </strong>
+          </div>
+
+          <b>
+            {score}
+          </b>
+        </div>
+
+        <div className="parker-best-card">
+          <span>
+            BEST
+          </span>
+
+          <strong>
+            {best}
+          </strong>
+        </div>
+
+        <div className="parker-center-controls">
+          <div className="parker-door-status">
+            {doorText}
+          </div>
+
           <div
-            className="parker-windows"
-            aria-hidden="true"
+            className="parker-speed-control"
+            onPointerDown={(
+              event,
+            ) =>
+              event.stopPropagation()
+            }
           >
-            {[0, 1, 2, 3, 4].map(
-              (index) => (
-                <span
-                  key={index}
-                  className={
-                    index < lit
-                      ? 'parker-window parker-window--lit'
-                      : 'parker-window'
-                  }
-                />
-              ),
-            )}
+            <span>
+              SPEED
+            </span>
+
+            <div>
+              {SPEEDS.map(
+                (
+                  _speed,
+                  index,
+                ) => {
+                  const level =
+                    index + 1
+
+                  return (
+                    <button
+                      key={
+                        level
+                      }
+                      type="button"
+                      className={
+                        speedLevel ===
+                        level
+                          ? 'is-active'
+                          : ''
+                      }
+                      onClick={() =>
+                        chooseSpeed(
+                          level,
+                        )
+                      }
+                    >
+                      {level}
+                    </button>
+                  )
+                },
+              )}
+            </div>
+          </div>
+
+          <div
+            className="parker-door-control"
+            onPointerDown={(
+              event,
+            ) =>
+              event.stopPropagation()
+            }
+          >
+            <span>
+              DOOR
+            </span>
+
+            <div>
+              {DOOR_SETTINGS.map(
+                (
+                  setting,
+                ) => (
+                  <button
+                    key={
+                      setting.value
+                    }
+                    type="button"
+                    className={
+                      doorMode ===
+                      setting.value
+                        ? 'is-active'
+                        : ''
+                    }
+                    onClick={() =>
+                      chooseDoor(
+                        setting.value,
+                      )
+                    }
+                  >
+                    {
+                      setting.label
+                    }
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="parker-park-button"
+            onClick={(
+              event,
+            ) => {
+              event.stopPropagation()
+              park()
+            }}
+          >
+            PARK
+          </button>
+        </div>
+
+        <div className="parker-house">
+          <img
+            className="parker-house-art"
+            src="/art/parker/house-scene.png"
+            alt=""
+            draggable={false}
+          />
+
+          <div className="parker-door-window">
+            <img
+              className="parker-door-art"
+              src="/art/parker/garage-door.png"
+              alt=""
+              draggable={false}
+              style={{
+                transform:
+                  `translateY(${
+                    -doorOpen *
+                    100
+                  }%)`,
+              }}
+            />
           </div>
         </div>
 
         <div
-          className="parker-opening"
-          style={{
-            width: `${OPENING_WIDTH}%`,
-            top: `${OPENING_TOP}%`,
-            height: `${
-              GARAGE_BOTTOM -
-              OPENING_TOP
-            }%`,
-          }}
-        />
-
-        <span
-          className="parker-guide"
-          style={{
-            top: `${GARAGE_BOTTOM}%`,
-            height: `${
-              ROAD_Y -
-              GARAGE_BOTTOM
-            }%`,
-          }}
+          className="parker-aim-line"
           aria-hidden="true"
         />
 
-        <span
-          className="parker-road"
+        <img
+          className={`parker-car ${
+            phase === 'parked'
+              ? 'is-parked'
+              : phase === 'bonk'
+                ? 'is-bonk'
+                : ''
+          }`}
+          src="/art/parker/jim-baby.png"
+          alt="Jim Baby"
+          draggable={false}
           style={{
-            top: `${ROAD_Y}%`,
+            left:
+              `${
+                phase ===
+                'driving'
+                  ? driveX
+                  : carX
+              }%`,
+            top:
+              `${carTop}%`,
           }}
-          aria-hidden="true"
         />
 
-        <div
-          className={
-            phase === 'bumping'
-              ? 'parker-car parker-car--bonk'
-              : 'parker-car'
-          }
-          style={{
-            left: `${carLeft}%`,
-            top: `${carTop}%`,
-            width: `${CAR_WIDTH}%`,
-            height: `${CAR_HEIGHT}%`,
-          }}
-        >
-          <span className="parker-lamp parker-lamp--left" />
-          <span className="parker-lamp parker-lamp--right" />
-          <span className="parker-windshield" />
-        </div>
+        {phase ===
+          'parked' && (
+          <div className="parker-feedback parker-feedback--good">
+            PARKED!
+          </div>
+        )}
+
+        {phase ===
+          'bonk' && (
+          <div className="parker-feedback parker-feedback--bad">
+            BONK!
+          </div>
+        )}
       </section>
-
-      <button
-        className="parker-action"
-        onClick={park}
-        disabled={
-          phase !== 'sliding'
-        }
-      >
-        PARK!
-      </button>
-
-      <button
-        className="parker-mode"
-        onClick={toggleMode}
-      >
-        Speed:{' '}
-        {mode === 'little'
-          ? 'Little'
-          : 'Big'}
-      </button>
     </main>
   )
 }

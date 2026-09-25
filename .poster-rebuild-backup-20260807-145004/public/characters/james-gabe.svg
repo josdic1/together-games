@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true">
+  <g stroke="#151515" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    
+        <path d="M48 176 C34 187 37 208 54 211 C70 213 74 193 83 187 C78 205 91 219 105 212 C116 205 111 187 119 183 C122 206 136 218 149 209 C160 201 149 184 155 178 C165 193 180 198 189 187 C198 175 183 164 176 153" fill="#a96cff"/>
+        <path d="M58 148 C52 98 72 59 120 55 C168 59 189 98 181 149 C166 171 145 183 120 183 C94 183 73 171 58 148Z" fill="#a96cff"/>
+        
+  <circle cx="96" cy="112" r="14" fill="#ffffff"/>
+  <circle cx="97" cy="113" r="6" fill="#151515" stroke="none"/>
+  <circle cx="94" cy="109" r="2.2" fill="#ffffff" stroke="none"/>
+  <circle cx="143" cy="112" r="14" fill="#ffffff"/>
+  <circle cx="144" cy="113" r="6" fill="#151515" stroke="none"/>
+  <circle cx="141" cy="109" r="2.2" fill="#ffffff" stroke="none"/>
+        
+  <path d="M 90 137 Q 120 164 150 137 Q 120 177 90 137 Z" fill="#151515"/>
+  <rect x="100" y="144" width="40" height="8" rx="3" fill="#ffffff" stroke="none"/>
+        <circle cx="74" cy="86" r="7" fill="#ff4d8d" stroke="none"/><circle cx="168" cy="91" r="6" fill="#ff4d8d" stroke="none"/>
+      
+  </g>
+</svg>

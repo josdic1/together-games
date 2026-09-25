@@ -1,0 +1,246 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { characters } from '../../content/characters'
+import './BugJumpPage.css'
+
+type Phase = 'ready' | 'running' | 'stumble'
+
+type Bug = {
+  id: number
+  x: number
+  resolved: boolean
+}
+
+const PLAYER_X = 22
+const GROUND = 13
+const HIT_RADIUS = 5
+const BUG_HEIGHT = 8
+const SPEED = 29
+const GAP = 2.25
+const JUMP_HANG = 0.78
+const JUMP_PEAK = 29
+const STUMBLE_HOLD = 650
+
+const LIFT = (4 * JUMP_PEAK) / JUMP_HANG
+const GRAVITY = (2 * LIFT) / JUMP_HANG
+
+export default function BugJumpPage() {
+  const [phase, setPhase] = useState<Phase>('ready')
+  const [jumped, setJumped] = useState(0)
+  const [best, setBest] = useState(0)
+  const [bugs, setBugs] = useState<Bug[]>([])
+  const [height, setHeight] = useState(0)
+  const [characterIndex, setCharacterIndex] = useState(() => {
+    const index = characters.findIndex((character) => character.id === 'flemish')
+    return index >= 0 ? index : 0
+  })
+
+  const jumpRef = useRef(false)
+  const idRef = useRef(1)
+  const worldRef = useRef({
+    bugs: [] as Bug[],
+    y: 0,
+    vy: 0,
+    airborne: false,
+    spawnIn: 1.35,
+    jumped: 0,
+  })
+
+  const jumper = characters[characterIndex]
+
+  useEffect(() => {
+    if (phase !== 'running') return
+
+    let frameId = 0
+    let last = performance.now()
+
+    function frame(now: number) {
+      const step = Math.min((now - last) / 1000, 0.05)
+      last = now
+
+      const world = worldRef.current
+
+      if (jumpRef.current) {
+        jumpRef.current = false
+        if (!world.airborne) {
+          world.airborne = true
+          world.vy = LIFT
+        }
+      }
+
+      if (world.airborne) {
+        world.vy -= GRAVITY * step
+        world.y += world.vy * step
+
+        if (world.y <= 0) {
+          world.y = 0
+          world.vy = 0
+          world.airborne = false
+        }
+      }
+
+      world.spawnIn -= step
+      if (world.spawnIn <= 0) {
+        world.spawnIn = GAP
+        world.bugs = [
+          ...world.bugs,
+          { id: idRef.current++, x: 108, resolved: false },
+        ]
+      }
+
+      let struck = false
+
+      for (const bug of world.bugs) {
+        bug.x -= SPEED * step
+        if (bug.resolved) continue
+
+        if (Math.abs(bug.x - PLAYER_X) < HIT_RADIUS && world.y < BUG_HEIGHT) {
+          bug.resolved = true
+          struck = true
+          continue
+        }
+
+        if (bug.x < PLAYER_X - HIT_RADIUS) {
+          bug.resolved = true
+          world.jumped += 1
+        }
+      }
+
+      world.bugs = world.bugs.filter((bug) => bug.x > -15)
+      setBugs([...world.bugs])
+      setHeight(world.y)
+      setJumped(world.jumped)
+      setBest((current) => Math.max(current, world.jumped))
+
+      if (struck) {
+        setPhase('stumble')
+        return
+      }
+
+      frameId = window.requestAnimationFrame(frame)
+    }
+
+    frameId = window.requestAnimationFrame(frame)
+    return () => window.cancelAnimationFrame(frameId)
+  }, [phase])
+
+  useEffect(() => {
+    if (phase !== 'stumble') return
+
+    const timer = window.setTimeout(() => {
+      const world = worldRef.current
+      world.bugs = []
+      world.y = 0
+      world.vy = 0
+      world.airborne = false
+      world.spawnIn = 1.25
+      setBugs([])
+      setHeight(0)
+      setPhase('running')
+    }, STUMBLE_HOLD)
+
+    return () => window.clearTimeout(timer)
+  }, [phase])
+
+  function jump() {
+    if (phase === 'stumble') return
+    jumpRef.current = true
+    if (phase === 'ready') setPhase('running')
+  }
+
+  useEffect(() => {
+    function keydown(event: KeyboardEvent) {
+      if (event.code === 'Space' && !event.repeat) {
+        event.preventDefault()
+        jump()
+      }
+    }
+
+    window.addEventListener('keydown', keydown)
+    return () => window.removeEventListener('keydown', keydown)
+  })
+
+  function choose(direction: -1 | 1) {
+    if (phase !== 'ready') return
+    setCharacterIndex((current) =>
+      (current + direction + characters.length) % characters.length,
+    )
+  }
+
+  function resetGame() {
+    const world = worldRef.current
+    jumpRef.current = false
+    idRef.current = 1
+    world.bugs = []
+    world.y = 0
+    world.vy = 0
+    world.airborne = false
+    world.spawnIn = 1.35
+    world.jumped = 0
+    setBugs([])
+    setHeight(0)
+    setJumped(0)
+    setPhase('ready')
+  }
+
+  const status =
+    phase === 'ready'
+      ? `Pick a jumper — ${jumper.name}`
+      : phase === 'stumble'
+        ? 'BONK!'
+        : 'Tap JUMP'
+
+  return (
+    <main className="bug-jump-game">
+      <header className="bug-jump-topbar">
+        <Link to="/" className="bug-jump-home">← Games</Link>
+        <h1>Bug Jump</h1>
+        <button className="bug-jump-reset" onClick={resetGame}>Reset</button>
+      </header>
+
+      <section className="bug-jump-hud">
+        <div className="bug-jump-score"><span>Jumped</span><strong>{jumped}</strong></div>
+        <p className={`bug-jump-status ${phase === 'stumble' ? 'bug-jump-status--warn' : ''}`}>{status}</p>
+        <div className="bug-jump-score"><span>Best</span><strong>{best}</strong></div>
+      </section>
+
+      <section className="bug-jump-stage" aria-label="Bug jump game">
+        <div className="bug-jump-ground" aria-hidden="true" />
+
+        {bugs.map((bug) => (
+          <img
+            key={bug.id}
+            className="bug-jump-obstacle"
+            src="/characters/bogus.png"
+            alt=""
+            draggable={false}
+            style={{ left: `${bug.x}%` }}
+          />
+        ))}
+
+        <img
+          className={`bug-jump-jumper ${phase === 'stumble' ? 'is-stumbling' : ''}`}
+          src={jumper.image}
+          alt={jumper.name}
+          draggable={false}
+          style={{
+            left: `${PLAYER_X}%`,
+            bottom: `${GROUND + height}%`,
+          }}
+        />
+
+        {phase === 'ready' && (
+          <div className="bug-jump-character-picker" aria-label="Choose a jumper">
+            <button className="bug-jump-picker" onClick={() => choose(-1)} aria-label="Previous character">←</button>
+            <span>{jumper.name}</span>
+            <button className="bug-jump-picker" onClick={() => choose(1)} aria-label="Next character">→</button>
+          </div>
+        )}
+      </section>
+
+      <button className="bug-jump-action" onClick={jump} disabled={phase === 'stumble'}>
+        JUMP!
+      </button>
+    </main>
+  )
+}

@@ -1,94 +1,61 @@
-import { Link } from 'react-router-dom'
-import { useMemo, useState } from 'react'
 import {
-  characters,
-  type Character,
-} from '../../content/characters'
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { Link } from 'react-router-dom'
+
+import { playTap, playCorrect, playWin } from '../../shared/sound'
 import './FindTheUnicornPage.css'
 
-type Scene = {
-  id: string
-  name: string
-  palette: [string, string, string]
-  covers: string[]
-}
-
-type Hideout = {
+type Cell = {
   id: number
-  cover: string
-  color: string
   unicorn: boolean
-  character: Character | null
-  opened: boolean
+  found: boolean
 }
 
-const UNICORNS_PER_SCENE = 2
+type Density = {
+  label: string
+  count: number
+  columns: number
+  rows: number
+}
 
-const slots = [
-  { x: 20, y: 30 },
-  { x: 50, y: 28 },
-  { x: 80, y: 30 },
-  { x: 20, y: 70 },
-  { x: 50, y: 68 },
-  { x: 80, y: 70 },
-]
+const UNICORN_COUNT = 5
+const EMPTY_REVEAL_MS = 460
+const UNICORN_REVEAL_MS = 680
+const ROUND_COMPLETE_MS = 1500
 
-const scenes: Scene[] = [
+const DENSITIES: Density[] = [
   {
-    id: 'beach',
-    name: 'Beach',
-    palette: ['sea', 'sun', 'tomato'],
-    covers: [
-      'umbrella',
-      'castle',
-      'ball',
-      'umbrella',
-      'castle',
-      'ball',
-    ],
+    label: '48',
+    count: 48,
+    columns: 8,
+    rows: 6,
   },
   {
-    id: 'shop',
-    name: 'Shop',
-    palette: ['sun', 'sea', 'tomato'],
-    covers: [
-      'crate',
-      'barrel',
-      'cart',
-      'crate',
-      'barrel',
-      'cart',
-    ],
+    label: '96',
+    count: 96,
+    columns: 12,
+    rows: 8,
   },
   {
-    id: 'park',
-    name: 'Park',
-    palette: ['leaf', 'sun', 'tomato'],
-    covers: [
-      'bush',
-      'tree',
-      'rock',
-      'bush',
-      'tree',
-      'rock',
-    ],
+    label: '160',
+    count: 160,
+    columns: 16,
+    rows: 10,
   },
   {
-    id: 'playground',
-    name: 'Playground',
-    palette: ['grape', 'sun', 'sea'],
-    covers: [
-      'bucket',
-      'tire',
-      'blocks',
-      'bucket',
-      'tire',
-      'blocks',
-    ],
+    label: '240',
+    count: 240,
+    columns: 20,
+    rows: 12,
   },
 ]
 
-const decoyCharacters = characters.slice(0, 12)
+const DENSITY_STORAGE_KEY =
+  'together-games:find-unicorn-density-v2'
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items]
@@ -96,14 +63,13 @@ function shuffle<T>(items: T[]): T[] {
   for (
     let index = copy.length - 1;
     index > 0;
-    index--
+    index -= 1
   ) {
     const swap = Math.floor(
       Math.random() * (index + 1),
     )
 
     const held = copy[index]
-
     copy[index] = copy[swap]
     copy[swap] = held
   }
@@ -111,367 +77,389 @@ function shuffle<T>(items: T[]): T[] {
   return copy
 }
 
-function buildHideouts(
-  scene: Scene,
-): Hideout[] {
-  const decoys = shuffle(
-    decoyCharacters,
-  ).slice(
-    0,
-    slots.length -
-      UNICORNS_PER_SCENE,
+function buildCells(count: number): Cell[] {
+  const unicornIds = new Set(
+    shuffle(
+      Array.from(
+        { length: count },
+        (_, index) => index,
+      ),
+    ).slice(0, UNICORN_COUNT),
   )
 
-  const prizes = shuffle([
-    ...Array.from(
-      {
-        length:
-          UNICORNS_PER_SCENE,
-      },
-      () => ({
-        unicorn: true,
-        character: null,
-      }),
-    ),
-
-    ...decoys.map(
-      (character) => ({
-        unicorn: false,
-        character,
-      }),
-    ),
-  ])
-
-  return slots.map(
+  return Array.from(
+    { length: count },
     (_, index) => ({
       id: index,
-
-      cover:
-        scene.covers[index],
-
-      color:
-        scene.palette[
-          index %
-            scene.palette.length
-        ],
-
-      unicorn:
-        prizes[index].unicorn,
-
-      character:
-        prizes[index].character,
-
-      opened: false,
+      unicorn: unicornIds.has(index),
+      found: false,
     }),
   )
 }
 
-export default function FindTheUnicornPage() {
-  const [sceneIndex, setSceneIndex] =
-    useState(0)
-
-  const scene = scenes[sceneIndex]
-
-  const [hideouts, setHideouts] =
-    useState<Hideout[]>(() =>
-      buildHideouts(scenes[0]),
-    )
-
-  const [
-    clearedScenes,
-    setClearedScenes,
-  ] = useState<string[]>([])
-
-  const found = useMemo(
-    () =>
-      hideouts.filter(
-        (hideout) =>
-          hideout.unicorn &&
-          hideout.opened,
-      ).length,
-    [hideouts],
+function getStartingDensityIndex() {
+  const saved = Number(
+    window.localStorage.getItem(
+      DENSITY_STORAGE_KEY,
+    ),
   )
 
-  const complete =
-    found === UNICORNS_PER_SCENE
+  if (
+    Number.isInteger(saved) &&
+    saved >= 0 &&
+    saved < DENSITIES.length
+  ) {
+    return saved
+  }
 
-  function openHideout(id: number) {
-    const hideout =
-      hideouts.find(
-        (item) => item.id === id,
+  return 0
+}
+
+export default function FindTheUnicornPage() {
+  const [densityIndex, setDensityIndex] =
+    useState(getStartingDensityIndex)
+
+  const density = DENSITIES[densityIndex]
+
+  const [cells, setCells] =
+    useState<Cell[]>(() =>
+      buildCells(
+        DENSITIES[
+          getStartingDensityIndex()
+        ].count,
+      ),
+    )
+
+  const [activeCellId, setActiveCellId] =
+    useState<number | null>(null)
+
+  const [isPaused, setIsPaused] =
+    useState(false)
+
+  const [roundComplete, setRoundComplete] =
+    useState(false)
+
+  const [roundsCleared, setRoundsCleared] =
+    useState(0)
+
+  const revealTimerRef =
+    useRef<number | null>(null)
+
+  const roundTimerRef =
+    useRef<number | null>(null)
+
+  const foundCount = useMemo(
+    () =>
+      cells.filter(
+        (cell) => cell.found,
+      ).length,
+    [cells],
+  )
+
+  function clearTimers() {
+    if (revealTimerRef.current) {
+      window.clearTimeout(
+        revealTimerRef.current,
       )
 
+      revealTimerRef.current = null
+    }
+
+    if (roundTimerRef.current) {
+      window.clearTimeout(
+        roundTimerRef.current,
+      )
+
+      roundTimerRef.current = null
+    }
+  }
+
+  function resetRound(
+    nextDensityIndex = densityIndex,
+  ) {
+    clearTimers()
+
+    const nextDensity =
+      DENSITIES[nextDensityIndex]
+
+    setCells(
+      buildCells(nextDensity.count),
+    )
+
+    setActiveCellId(null)
+    setIsPaused(false)
+    setRoundComplete(false)
+  }
+
+  function chooseDensity(index: number) {
+    if (index === densityIndex) {
+      return
+    }
+
+    window.localStorage.setItem(
+      DENSITY_STORAGE_KEY,
+      String(index),
+    )
+
+    setDensityIndex(index)
+    resetRound(index)
+  }
+
+  function openCell(id: number) {
     if (
-      !hideout ||
-      hideout.opened
+      isPaused ||
+      roundComplete ||
+      activeCellId !== null
     ) {
       return
     }
 
-    const next = hideouts.map(
-      (item) =>
-        item.id === id
-          ? {
-              ...item,
-              opened: true,
-            }
-          : item,
+    const cell = cells.find(
+      (item) => item.id === id,
     )
 
-    setHideouts(next)
-
-    const nowFound = next.filter(
-      (item) =>
-        item.unicorn &&
-        item.opened,
-    ).length
-
-    if (
-      nowFound ===
-      UNICORNS_PER_SCENE
-    ) {
-      setClearedScenes(
-        (current) =>
-          current.includes(
-            scene.id,
-          )
-            ? current
-            : [
-                ...current,
-                scene.id,
-              ],
-      )
-    }
-  }
-
-  function goToScene(
-    index: number,
-  ) {
-    setSceneIndex(index)
-
-    setHideouts(
-      buildHideouts(
-        scenes[index],
-      ),
-    )
-  }
-
-  function nextScene() {
-    goToScene(
-      (sceneIndex + 1) %
-        scenes.length,
-    )
-  }
-
-  function resetScene() {
-    setHideouts(
-      buildHideouts(scene),
-    )
-  }
-
-  function statusText() {
-    if (complete) {
-      return 'You found them both!'
+    if (!cell || cell.found) {
+      return
     }
 
-    if (found === 1) {
-      return 'One more!'
+    playTap()
+    setActiveCellId(id)
+    setIsPaused(true)
+
+    if (!cell.unicorn) {
+      revealTimerRef.current =
+        window.setTimeout(() => {
+          setActiveCellId(null)
+          setIsPaused(false)
+          revealTimerRef.current = null
+        }, EMPTY_REVEAL_MS)
+
+      return
     }
 
-    return 'Where are they hiding?'
+    revealTimerRef.current =
+      window.setTimeout(() => {
+        setCells((current) =>
+          current.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  found: true,
+                }
+              : item,
+          ),
+        )
+
+        setActiveCellId(null)
+        revealTimerRef.current = null
+
+        const nextFoundCount =
+          foundCount + 1
+
+        if (
+          nextFoundCount ===
+          UNICORN_COUNT
+        ) {
+          playWin()
+          setRoundComplete(true)
+
+          roundTimerRef.current =
+            window.setTimeout(() => {
+              setRoundsCleared(
+                (current) =>
+                  current + 1,
+              )
+
+              setCells(
+                buildCells(
+                  density.count,
+                ),
+              )
+
+              setRoundComplete(false)
+              setIsPaused(false)
+              roundTimerRef.current = null
+            }, ROUND_COMPLETE_MS)
+
+          return
+        }
+
+        playCorrect()
+        setIsPaused(false)
+      }, UNICORN_REVEAL_MS)
   }
+
+  useEffect(() => {
+    return () => {
+      clearTimers()
+    }
+  }, [])
 
   return (
-    <main className="find-unicorn-game">
-      <header className="find-unicorn-topbar">
+    <main className="unicorn-hunt-game">
+      <header className="unicorn-hunt-topbar">
         <Link
           to="/"
-          className="find-unicorn-home"
+          className="unicorn-hunt-home"
         >
           ← Games
         </Link>
 
-        <h1>Find the Unicorn</h1>
+        <h1>
+          Find Unicorn
+        </h1>
 
-        <button
-          className="find-unicorn-reset"
-          onClick={resetScene}
-        >
-          Reset
-        </button>
+        <div className="unicorn-hunt-score">
+          <span>
+            FOUND
+          </span>
+
+          <strong>
+            {foundCount} / {UNICORN_COUNT}
+          </strong>
+        </div>
       </header>
 
-      <section className="find-unicorn-hud">
-        <div className="find-unicorn-score">
-          <span>Found</span>
+      <section
+        className="unicorn-hunt-stage"
+        aria-label={`Find five unicorns hidden under ${density.count} cacti.`}
+      >
+        <div className="unicorn-hunt-rounds">
+          <span>
+            ROUNDS
+          </span>
 
           <strong>
-            {found} /{' '}
-            {UNICORNS_PER_SCENE}
+            {roundsCleared}
           </strong>
         </div>
 
-        <p
-          className={`find-unicorn-status ${
-            complete
-              ? 'find-unicorn-status--win'
-              : ''
-          }`}
-          aria-live="polite"
+        <div
+          className="unicorn-hunt-density"
+          onPointerDown={(event) =>
+            event.stopPropagation()
+          }
         >
-          {statusText()}
+          <span>
+            CACTI
+          </span>
+
+          <div>
+            {DENSITIES.map(
+              (option, index) => (
+                <button
+                  key={option.count}
+                  type="button"
+                  className={
+                    densityIndex === index
+                      ? 'is-active'
+                      : ''
+                  }
+                  onClick={() =>
+                    chooseDensity(index)
+                  }
+                  aria-pressed={
+                    densityIndex === index
+                  }
+                >
+                  {option.label}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+
+        <p className="unicorn-hunt-instruction">
+          TAP A CACTUS
         </p>
 
-        <div className="find-unicorn-score">
-          <span>Scenes</span>
-
-          <strong>
-            {clearedScenes.length} /{' '}
-            {scenes.length}
-          </strong>
-        </div>
-      </section>
-
-      <section
-        className={`find-unicorn-stage find-unicorn-stage--${scene.id}`}
-        aria-label={`${scene.name} scene`}
-      >
         <div
-          className={`find-unicorn-sky find-unicorn-bg--${scene.palette[0]}`}
-          aria-hidden="true"
-        />
+          className={`unicorn-hunt-board ${
+            isPaused
+              ? 'is-paused'
+              : ''
+          }`}
+          style={{
+            gridTemplateColumns:
+              `repeat(${density.columns}, minmax(0, 1fr))`,
+            gridTemplateRows:
+              `repeat(${density.rows}, minmax(0, 1fr))`,
+          }}
+        >
+          {cells.map((cell) => {
+            const isActive =
+              activeCellId === cell.id
 
-        <div
-          className={`find-unicorn-ground find-unicorn-bg--${scene.palette[1]}`}
-          aria-hidden="true"
-        />
+            const isOpen =
+              isActive || cell.found
 
-        {hideouts.map(
-          (hideout, index) => {
-            const slot =
-              slots[index]
+            const showUnicorn =
+              cell.unicorn && isOpen
 
             return (
               <button
-                key={hideout.id}
-                className={`find-unicorn-hideout ${
-                  hideout.opened
-                    ? 'find-unicorn-hideout--open'
+                key={cell.id}
+                type="button"
+                className={`unicorn-hunt-cell ${
+                  isActive
+                    ? 'is-active'
+                    : ''
+                } ${
+                  cell.found
+                    ? 'is-found'
                     : ''
                 }`}
-                style={{
-                  left: `${slot.x}%`,
-                  top: `${slot.y}%`,
-                }}
                 onClick={() =>
-                  openHideout(
-                    hideout.id,
-                  )
+                  openCell(cell.id)
                 }
                 aria-label={
-                  hideout.opened
-                    ? 'Already looked here'
-                    : `Look under the ${hideout.cover}`
+                  cell.found
+                    ? 'Found unicorn'
+                    : 'Look under cactus'
+                }
+                aria-disabled={
+                  isPaused || cell.found
                 }
               >
                 <span
-                  className={`find-unicorn-reveal ${
-                    hideout.unicorn
-                      ? 'find-unicorn-reveal--unicorn'
-                      : ''
+                  className={`unicorn-hunt-under ${
+                    showUnicorn
+                      ? 'has-unicorn'
+                      : 'is-empty'
                   }`}
+                  aria-hidden="true"
                 >
-                  {hideout.unicorn ? (
-                    <span
-                      className="paper-unicorn"
-                      aria-hidden="true"
-                    >
-                      <span className="paper-unicorn__ear paper-unicorn__ear--left" />
-                      <span className="paper-unicorn__ear paper-unicorn__ear--right" />
-                      <span className="paper-unicorn__horn" />
-
-                      <span className="paper-unicorn__head">
-                        <span className="paper-unicorn__eye paper-unicorn__eye--left" />
-                        <span className="paper-unicorn__eye paper-unicorn__eye--right" />
-                        <span className="paper-unicorn__nose" />
-                      </span>
-                    </span>
-                  ) : (
-                    hideout.character && (
-                      <img
-                        src={
-                          hideout
-                            .character
-                            .image
-                        }
-                        alt=""
-                        draggable={
-                          false
-                        }
-                      />
-                    )
+                  {showUnicorn && (
+                    <img
+                      src="/art/find-unicorn/unicorn.png"
+                      alt=""
+                      draggable={false}
+                    />
                   )}
                 </span>
 
-                <span
-                  className={`find-unicorn-cover find-unicorn-cover--${hideout.cover} find-unicorn-cover--${hideout.color}`}
-                  aria-hidden="true"
-                >
-                  <span className="find-unicorn-part find-unicorn-part--a" />
-                  <span className="find-unicorn-part find-unicorn-part--b" />
+                <span className="unicorn-hunt-cactus-wrap">
+                  <img
+                    className="unicorn-hunt-cactus"
+                    src="/art/find-unicorn/cactus.png"
+                    alt=""
+                    draggable={false}
+                  />
                 </span>
               </button>
             )
-          },
+          })}
+        </div>
+
+        {roundComplete && (
+          <div
+            className="unicorn-hunt-complete"
+            aria-live="polite"
+          >
+            FOUND THEM ALL!
+          </div>
         )}
       </section>
-
-      <section
-        className="find-unicorn-scenes"
-        aria-label="Scenes"
-      >
-        {scenes.map(
-          (item, index) => (
-            <button
-              key={item.id}
-              className={`find-unicorn-scene-button ${
-                index ===
-                sceneIndex
-                  ? 'is-active'
-                  : ''
-              }`}
-              onClick={() =>
-                goToScene(index)
-              }
-            >
-              {item.name}
-
-              {clearedScenes.includes(
-                item.id,
-              ) && (
-                <span
-                  aria-label="Completed"
-                >
-                  ✓
-                </span>
-              )}
-            </button>
-          ),
-        )}
-      </section>
-
-      <button
-        className={`find-unicorn-action ${
-          complete
-            ? 'find-unicorn-action--ready'
-            : ''
-        }`}
-        onClick={nextScene}
-      >
-        {complete
-          ? 'Next Scene!'
-          : 'New Scene'}
-      </button>
     </main>
   )
 }

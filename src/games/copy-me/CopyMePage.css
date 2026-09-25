@@ -185,6 +185,33 @@
   object-fit: contain;
 }
 
+.copy-me-delete {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 4px solid var(--ink);
+  border-radius: 50%;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  font-size: 1.3rem;
+  line-height: 1;
+
+  box-shadow: 0 4px 0 rgb(42 33 24 / 15%);
+
+  cursor: pointer;
+}
+
+.copy-me-delete:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
 /* CHARACTERS — NO CARDS */
 
 .copy-me-buttons {

@@ -8,13 +8,14 @@ import {
   characters,
   type Character,
 } from '../../content/characters'
+import { playTap, playCorrect, playWrong } from '../../shared/sound'
 import './CopyMePage.css'
 
 type Phase = 'create' | 'copy' | 'result'
 
 const MIN_PATTERN_LENGTH = 2
-const MAX_PATTERN_LENGTH = 5
-const HINT_COOLDOWN = 10
+const MAX_PATTERN_LENGTH = 4
+const HINT_COOLDOWN = 6
 
 function getCharacter(id: string): Character {
   const character = characters.find(
@@ -127,6 +128,8 @@ export default function CopyMePage() {
         return
       }
 
+      playTap()
+
       setPattern((current) => [
         ...current,
         characterId,
@@ -139,6 +142,7 @@ export default function CopyMePage() {
       return
     }
 
+    playTap()
     clearHintReveal()
 
     const nextAttempt = [
@@ -169,9 +173,12 @@ export default function CopyMePage() {
     setPhase('result')
 
     if (!correct) {
+      playWrong()
       setLastPoints(null)
       return
     }
+
+    playCorrect()
 
     const points =
       hintUsedThisRound ? 1 : 2
@@ -238,6 +245,22 @@ export default function CopyMePage() {
         hintTimerRef.current =
           null
       }, 1400)
+  }
+
+  function removeLastAttempt() {
+    if (
+      phase !== 'copy' ||
+      attempt.length === 0
+    ) {
+      return
+    }
+
+    clearHintReveal()
+    playTap()
+
+    setAttempt((current) =>
+      current.slice(0, -1),
+    )
   }
 
   function tryAgain() {
@@ -440,6 +463,48 @@ export default function CopyMePage() {
                 </span>
               ),
             )
+          )}
+        </section>
+      )}
+
+      {phase === 'copy' && (
+        <section
+          className="copy-me-pattern"
+          aria-label="Your answer so far"
+        >
+          {attempt.length === 0 ? (
+            <span>
+              Tap your answer
+            </span>
+          ) : (
+            <>
+              {attempt.map(
+                (
+                  characterId,
+                  index,
+                ) => (
+                  <span
+                    className="copy-me-pattern-character"
+                    key={`attempt-${characterId}-${index}`}
+                  >
+                    {renderCharacter(
+                      characterId,
+                    )}
+                  </span>
+                ),
+              )}
+
+              <button
+                type="button"
+                className="copy-me-delete"
+                onClick={
+                  removeLastAttempt
+                }
+                aria-label="Delete last pick"
+              >
+                ⌫
+              </button>
+            </>
           )}
         </section>
       )}
