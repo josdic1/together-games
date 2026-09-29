@@ -1,0 +1,8 @@
+.octo-stage { background: #ff9dc8; touch-action: manipulation; }
+.octo-hint { position:absolute; z-index:3; top:14px; left:50%; transform:translateX(-50%); padding:6px 12px; border:3px solid #171717; border-radius:999px; background:#fffdf8; font-size:.78rem; white-space:nowrap; }
+.octo-stack-area { position:absolute; inset:54px 5% 2%; }
+.octo-james { position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:min(210px,28vw); height:min(210px,28vw); object-fit:contain; }
+.octo-stack { position:absolute; left:8%; right:8%; top:0; bottom:21%; }
+.octo-block { position:absolute; height:7.2%; transform:translateX(-50%); border:4px solid #171717; border-radius:10px 8px 9px 7px; box-shadow:3px 3px 0 #171717; }
+.octo-block--moving { box-shadow:5px 5px 0 #171717; }
+.octo-result { width:140px; height:110px; object-fit:contain; }

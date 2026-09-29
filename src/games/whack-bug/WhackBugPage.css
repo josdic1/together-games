@@ -1,0 +1,63 @@
+.whack-stage {
+  background: #20b9df;
+}
+
+.whack-timer {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  right: 16px;
+  padding: 7px 12px;
+  border: 3px solid #171717;
+  border-radius: 999px;
+  background: #ffe33b;
+}
+
+.whack-grid {
+  position: absolute;
+  inset: 52px 26px 26px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: clamp(10px, 2.5vw, 26px);
+}
+
+.whack-hole {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  touch-action: manipulation;
+}
+
+.whack-hole__pit {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 5%;
+  height: 27%;
+  border: 4px solid #171717;
+  border-radius: 50%;
+  background: #65442b;
+  box-shadow: inset 0 8px 0 rgb(0 0 0 / .16);
+}
+
+.whack-hole img {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 9%;
+  width: min(78%, 150px);
+  height: 80%;
+  object-fit: contain;
+  transform: translateX(-50%);
+  animation: whack-pop .16s ease-out;
+  pointer-events: none;
+}
+
+.whack-result { width: 130px; height: 110px; object-fit: contain; }
+
+@keyframes whack-pop {
+  from { transform: translateX(-50%) translateY(55%) scale(.6); }
+  to { transform: translateX(-50%) translateY(0) scale(1); }
+}

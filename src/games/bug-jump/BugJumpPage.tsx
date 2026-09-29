@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from 'react'
@@ -433,6 +434,10 @@ export default function BugJumpPage() {
       )
   }
 
+  const jumpFromEffect = useEffectEvent(() => {
+    jump()
+  })
+
   function bonk() {
     if (
       phaseRef.current !==
@@ -481,6 +486,10 @@ export default function BugJumpPage() {
         650,
       )
   }
+
+  const bonkFromEffect = useEffectEvent(() => {
+    bonk()
+  })
 
   useEffect(
     () => {
@@ -562,7 +571,7 @@ export default function BugJumpPage() {
           )
 
         if (struck) {
-          bonk()
+          bonkFromEffect()
           return
         }
 
@@ -652,7 +661,7 @@ export default function BugJumpPage() {
         }
 
         event.preventDefault()
-        jump()
+        jumpFromEffect()
       }
 
       window.addEventListener(

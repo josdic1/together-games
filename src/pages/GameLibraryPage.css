@@ -1,16 +1,18 @@
 .poster-library {
   width: 100%;
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
   overflow: auto;
   background: #fffaf0;
 }
 
 .poster-library__frame {
   position: relative;
-  width: min(100vw, calc(100dvh * 1.5));
-  aspect-ratio: 3 / 2;
+  width: min(100vw - 16px, calc((100dvh - 16px) * 4 / 3));
+  aspect-ratio: 4 / 3;
   flex: 0 0 auto;
 }
 
@@ -26,7 +28,7 @@
 .poster-library__hotspot {
   position: absolute;
   display: block;
-  border-radius: 4%;
+  border-radius: 5%;
   background: transparent;
   -webkit-tap-highlight-color: transparent;
 }
@@ -37,16 +39,16 @@
 }
 
 .poster-library__hotspot:active {
-  background: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / .14);
 }
 
-@media (max-aspect-ratio: 3 / 2) {
+@media (max-aspect-ratio: 4 / 3) {
   .poster-library {
-    align-items: start;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .poster-library__frame {
-    width: 100vw;
-    min-width: 760px;
+    width: max(100vw - 16px, 720px);
   }
 }

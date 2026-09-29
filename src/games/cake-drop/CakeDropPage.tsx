@@ -1,6 +1,7 @@
 import {
   type CSSProperties,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -490,6 +491,10 @@ export default function CakeDropPage() {
       )
   }
 
+  const finishDropFromEffect = useEffectEvent(() => {
+    finishDrop()
+  })
+
   function drop() {
     if (
       phaseRef.current !==
@@ -513,6 +518,10 @@ export default function CakeDropPage() {
     setWillLand(lands)
     setGamePhase('falling')
   }
+
+  const dropFromEffect = useEffectEvent(() => {
+    drop()
+  })
 
   function resetMatch() {
     if (
@@ -699,7 +708,7 @@ export default function CakeDropPage() {
 
       const timer =
         window.setTimeout(
-          finishDrop,
+          finishDropFromEffect,
           650,
         )
 
@@ -709,11 +718,7 @@ export default function CakeDropPage() {
         )
       }
     },
-    [
-      phase,
-      willLand,
-      dropX,
-    ],
+    [phase],
   )
 
   useEffect(
@@ -730,7 +735,7 @@ export default function CakeDropPage() {
         }
 
         event.preventDefault()
-        drop()
+        dropFromEffect()
       }
 
       window.addEventListener(

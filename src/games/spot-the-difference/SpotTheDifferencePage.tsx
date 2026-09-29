@@ -222,22 +222,28 @@ function buildRound(
 }
 
 export default function SpotTheDifferencePage() {
+  const [initialSetup] = useState(() => {
+    const bag = refillBag()
+    const crowd = bag[0]
+    const odd = pickOddCharacter(crowd)
+
+    return {
+      remainingBag: bag.slice(1),
+      round: buildRound(
+        DEFAULT_CROWD,
+        crowd,
+        odd,
+      ),
+    }
+  })
+
   const bagRef = useRef<Character[]>(
-    refillBag(),
+    initialSetup.remainingBag,
   )
 
   const timerRef = useRef<
     number | null
   >(null)
-
-  const initialPairRef = useRef<
-    [Character, Character] | null
-  >(null)
-
-  if (!initialPairRef.current) {
-    initialPairRef.current =
-      takePair(bagRef)
-  }
 
   const [crowdSize, setCrowdSize] =
     useState<CrowdSize>(
@@ -245,16 +251,7 @@ export default function SpotTheDifferencePage() {
     )
 
   const [round, setRound] =
-    useState<Round>(() => {
-      const [crowd, odd] =
-        initialPairRef.current!
-
-      return buildRound(
-        DEFAULT_CROWD,
-        crowd,
-        odd,
-      )
-    })
+    useState<Round>(initialSetup.round)
 
   const [phase, setPhase] =
     useState<Phase>('ready')

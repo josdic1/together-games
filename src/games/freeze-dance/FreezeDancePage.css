@@ -1,0 +1,18 @@
+.freeze-stage { background:#9f68e6; touch-action:manipulation; }
+.freeze-stage::before, .freeze-stage::after { content:''; position:absolute; top:-10%; width:45%; height:80%; opacity:.42; background:linear-gradient(75deg,transparent 30%,#ffe33b 31% 48%,transparent 49%); }
+.freeze-stage::before { left:0; }
+.freeze-stage::after { right:0; transform:scaleX(-1); }
+.freeze-disco { position:absolute; top:12px; left:50%; transform:translateX(-50%); width:76px; height:76px; display:grid; place-items:center; border:4px solid #171717; border-radius:50%; background:#dff7ff; font-size:2.8rem; }
+.freeze-floor { position:absolute; left:0; right:0; bottom:0; height:29%; border-top:5px solid #171717; background:repeating-linear-gradient(90deg,#ffe33b 0 80px,#20b9df 80px 160px,#ff5a86 160px 240px); }
+.freeze-character { position:absolute; z-index:4; left:50%; bottom:13%; transform:translateX(-50%); width:min(290px,38vw); height:min(290px,38vw); object-fit:contain; }
+.is-dance .freeze-character { animation:freeze-dance .45s ease-in-out infinite alternate; }
+.is-freeze .freeze-character, .is-result .freeze-character { animation:none; }
+.freeze-note { position:absolute; z-index:3; font-size:clamp(3rem,8vw,6rem); color:#ffe33b; -webkit-text-stroke:2px #171717; }
+.freeze-note--one { left:12%; top:18%; transform:rotate(-12deg); }
+.freeze-note--two { right:13%; top:25%; transform:rotate(12deg); }
+.freeze-note--three { left:22%; bottom:19%; }
+.freeze-command { position:absolute; z-index:8; top:18%; left:50%; transform:translateX(-50%) rotate(-2deg); padding:8px 16px; border:4px solid #171717; border-radius:14px 11px 15px 12px; background:#ff5a86; font-size:clamp(2rem,7vw,5rem); line-height:.9; white-space:nowrap; }
+.is-freeze .freeze-command { background:#ffe33b; transform:translateX(-50%) rotate(2deg) scale(1.08); }
+.freeze-instruction { position:absolute; z-index:8; left:50%; bottom:10px; transform:translateX(-50%); padding:6px 10px; border:3px solid #171717; border-radius:999px; background:#fffdf8; font-size:.78rem; white-space:nowrap; }
+.freeze-next { position:absolute; z-index:12; right:18px; bottom:18px; }
+@keyframes freeze-dance { from { transform:translateX(-50%) rotate(-8deg) translateY(0); } to { transform:translateX(-50%) rotate(8deg) translateY(-20px); } }

@@ -1,0 +1,40 @@
+.snail-stage {
+  background: linear-gradient(#ffe33b 0 58%, #62cf50 58% 100%);
+  touch-action: manipulation;
+}
+
+.snail-sun { position:absolute; top:18px; left:22px; font-size:3rem; }
+.snail-finish { position:absolute; right:4%; top:12%; bottom:8%; display:grid; align-items:center; font-size:4rem; border-left:5px dashed #171717; padding-left:10px; }
+
+.snail-lane {
+  position: absolute;
+  left: 3%;
+  right: 4%;
+  height: 35%;
+  border-bottom: 5px solid #171717;
+}
+
+.snail-lane--roy { top: 20%; }
+.snail-lane--nickel { top: 58%; }
+
+.snail-lane img {
+  position: absolute;
+  bottom: 8px;
+  width: clamp(86px, 14vw, 150px);
+  height: clamp(86px, 14vw, 150px);
+  object-fit: contain;
+  transition: left 90ms linear;
+}
+
+.snail-lane span {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  padding: 4px 8px;
+  border: 2px solid #171717;
+  border-radius: 999px;
+  background: #fffdf8;
+  font-size: .75rem;
+}
+
+.snail-winner { width: 150px; height: 120px; object-fit: contain; }

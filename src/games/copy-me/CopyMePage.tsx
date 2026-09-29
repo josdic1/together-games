@@ -89,7 +89,7 @@ export default function CopyMePage() {
     }
 
     const timer =
-      window.setInterval(() => {
+      window.setTimeout(() => {
         setHintCooldown(
           (current) =>
             Math.max(
@@ -100,8 +100,8 @@ export default function CopyMePage() {
       }, 1000)
 
     return () =>
-      window.clearInterval(timer)
-  }, [hintCooldown > 0])
+      window.clearTimeout(timer)
+  }, [hintCooldown])
 
   function clearHintReveal() {
     if (

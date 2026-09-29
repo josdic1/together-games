@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -32,6 +33,42 @@ type FloorScale =
 const DEFAULT_SCALE: FloorScale = 5
 const TRAVEL_SPEED = 4.25
 const OPEN_HOLD = 950
+
+// The floor-select keypad sits at the bottom of the stage and grows
+// taller as more floors are added (more buttons -> more rows). The
+// building above it needs to leave exactly that much room, or the
+// keypad ends up sitting on top of - and hiding - the lowest floors
+// (Ground included). These numbers mirror the keypad's own CSS
+// (.elevator-hunt-key min-height, .elevator-hunt-keypad gap,
+// .elevator-hunt-keypad-wrap bottom).
+const KEYPAD_KEY_HEIGHT = 56
+const KEYPAD_ROW_GAP = 8
+const KEYPAD_WRAP_BOTTOM = 14
+const BUILDING_KEYPAD_GAP = 14
+
+// Use the mobile column count (4) even on desktop (5 columns) when
+// working out how many rows the keypad needs - that always reserves
+// *at least* enough room, since fewer columns per row only ever means
+// more rows, never fewer.
+const KEYPAD_MIN_COLUMNS = 4
+
+function getBuildingBottomReserve(
+  maxFloors: number,
+) {
+  const rows = Math.ceil(
+    maxFloors / KEYPAD_MIN_COLUMNS,
+  )
+
+  const keypadHeight =
+    rows * KEYPAD_KEY_HEIGHT +
+    (rows - 1) * KEYPAD_ROW_GAP
+
+  return (
+    KEYPAD_WRAP_BOTTOM +
+    keypadHeight +
+    BUILDING_KEYPAD_GAP
+  )
+}
 
 const BEST_STREAK_STORAGE_KEY =
   'together-games:find-floor-best-streak'
@@ -201,6 +238,22 @@ export default function FindTheFloorPage() {
     setPhase('waiting')
   }
 
+  const finishTravel = useEffectEvent(() => {
+    if (phase === 'rising') {
+      setPhase('open')
+      return
+    }
+
+    if (wasCorrect) {
+      advanceCharacter()
+      return
+    }
+
+    setWasCorrect(false)
+    setSelectedFloor(0)
+    setPhase('waiting')
+  })
+
   useEffect(() => {
     if (
       phase !== 'rising' &&
@@ -215,19 +268,16 @@ export default function FindTheFloorPage() {
         : 0
 
     if (goal === elevatorFloorRef.current) {
-      if (phase === 'rising') {
-        setPhase('open')
-      } else {
-        if (wasCorrect) {
-          advanceCharacter()
-        } else {
-          setWasCorrect(false)
-          setSelectedFloor(0)
-          setPhase('waiting')
-        }
-      }
+      const frameId =
+        window.requestAnimationFrame(
+          finishTravel,
+        )
 
-      return undefined
+      return () => {
+        window.cancelAnimationFrame(
+          frameId,
+        )
+      }
     }
 
     const direction =
@@ -262,17 +312,7 @@ export default function FindTheFloorPage() {
         elevatorFloorRef.current = goal
         setElevatorFloor(goal)
 
-        if (phase === 'rising') {
-          setPhase('open')
-        } else {
-          if (wasCorrect) {
-            advanceCharacter()
-          } else {
-            setWasCorrect(false)
-            setSelectedFloor(0)
-            setPhase('waiting')
-          }
-        }
+        finishTravel()
 
         return
       }
@@ -296,13 +336,7 @@ export default function FindTheFloorPage() {
         frameId,
       )
     }
-  }, [
-    phase,
-    selectedFloor,
-    wasCorrect,
-    bag,
-    maxFloors,
-  ])
+  }, [phase, selectedFloor])
 
   useEffect(() => {
     if (phase !== 'open') {
@@ -468,7 +502,15 @@ export default function FindTheFloorPage() {
           </div>
         </div>
 
-        <div className="elevator-hunt-building">
+        <div
+          className="elevator-hunt-building"
+          style={{
+            bottom:
+              getBuildingBottomReserve(
+                maxFloors,
+              ),
+          }}
+        >
           <div className="elevator-hunt-aim-line" />
 
           <div className="elevator-hunt-shaft">

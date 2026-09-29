@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from 'react'
@@ -288,6 +289,11 @@ export default function ParkerPage() {
   ) {
     setDoorMode(mode)
 
+    if (mode === 0) {
+      doorOpenRef.current = 1
+      setDoorOpen(1)
+    }
+
     window.localStorage.setItem(
       DOOR_KEY,
       String(mode),
@@ -307,6 +313,10 @@ export default function ParkerPage() {
       'moving',
     )
   }
+
+  const resetRoundFromEffect = useEffectEvent(() => {
+    resetRound()
+  })
 
   function park() {
     if (
@@ -331,14 +341,17 @@ export default function ParkerPage() {
     )
   }
 
+  const parkFromEffect = useEffectEvent(() => {
+    park()
+  })
+
   useEffect(
     () => {
       if (
         doorMode === 0
       ) {
         doorOpenRef.current = 1
-        setDoorOpen(1)
-        return
+        return undefined
       }
 
       const started =
@@ -566,7 +579,7 @@ export default function ParkerPage() {
 
           feedbackTimerRef.current =
             window.setTimeout(
-              resetRound,
+              resetRoundFromEffect,
               700,
             )
 
@@ -588,7 +601,7 @@ export default function ParkerPage() {
             () => {
               // Missing the garage just resets the round - one bad
               // parking attempt shouldn't wipe the whole score.
-              resetRound()
+              resetRoundFromEffect()
             },
             800,
           )
@@ -626,7 +639,7 @@ export default function ParkerPage() {
         }
 
         event.preventDefault()
-        park()
+        parkFromEffect()
       }
 
       window.addEventListener(
