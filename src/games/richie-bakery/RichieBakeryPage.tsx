@@ -4,120 +4,174 @@ import { playTap, playWin } from '../../shared/sound'
 import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './RichieBakeryPage.css'
 
-type Recipe = { name: string; emoji: string; ingredients: string[] }
-
-const RECIPES: Recipe[] = [
-  { name: 'Burger', emoji: '🍔', ingredients: ['Bottom bun','Patty','Cheese','Lettuce','Tomato','Top bun'] },
-  { name: 'Ice Cream Sundae', emoji: '🍨', ingredients: ['Ice cream','Chocolate','Whipped cream','Sprinkles','Cherry'] },
-  { name: 'Cookies', emoji: '🍪', ingredients: ['Flour','Butter','Sugar','Egg','Chocolate chips'] },
-  { name: 'Pizza', emoji: '🍕', ingredients: ['Dough','Sauce','Cheese','Pepperoni'] },
-  { name: 'Pancakes', emoji: '🥞', ingredients: ['Pancake','Syrup','Butter','Berries'] },
-  { name: 'Taco', emoji: '🌮', ingredients: ['Shell','Beef','Cheese','Lettuce','Salsa'] },
-  { name: 'Cupcake', emoji: '🧁', ingredients: ['Cake','Frosting','Sprinkles','Cherry'] },
-  { name: 'Sandwich', emoji: '🥪', ingredients: ['Bread','Turkey','Cheese','Lettuce','Bread'] },
-]
-
+type Difficulty = 'easy' | 'mid' | 'hard'
+type Ingredient = { id: string; label: string; art: string }
+type Recipe = { name: string; ingredients: Ingredient[] }
 type Phase = 'choose' | 'demo' | 'build' | 'done'
 
-function shuffledUnique(items: string[], seed: number) {
-  const next = [...new Set(items)]
+const I = (id: string, label: string, art = id): Ingredient => ({ id, label, art })
+const INGREDIENTS = {
+  bottomBun: I('bottom-bun', 'Bottom bun', 'bun-bottom'),
+  patty: I('patty', 'Burger patty'),
+  cheese: I('cheese', 'Cheese'),
+  lettuce: I('lettuce', 'Lettuce'),
+  tomato: I('tomato', 'Tomato'),
+  ketchup: I('ketchup', 'Ketchup'),
+  topBun: I('top-bun', 'Top bun', 'bun-top'),
+  iceCream: I('ice-cream', 'Ice cream'),
+  chocolate: I('chocolate', 'Chocolate sauce'),
+  whipped: I('whipped', 'Whipped cream'),
+  sprinkles: I('sprinkles', 'Sprinkles'),
+  cherry: I('cherry', 'Cherry'),
+  flour: I('flour', 'Flour'),
+  butter: I('butter', 'Butter'),
+  sugar: I('sugar', 'Sugar'),
+  egg: I('egg', 'Egg'),
+  chips: I('chips', 'Chocolate chips'),
+  dough: I('dough', 'Dough'),
+  sauce: I('sauce', 'Tomato sauce'),
+  pepperoni: I('pepperoni', 'Pepperoni'),
+  pancake: I('pancake', 'Pancake'),
+  syrup: I('syrup', 'Syrup'),
+  berries: I('berries', 'Berries'),
+  shell: I('shell', 'Taco shell'),
+  beef: I('beef', 'Beef'),
+  salsa: I('salsa', 'Salsa'),
+  cake: I('cake', 'Cake'),
+  frosting: I('frosting', 'Frosting'),
+  bread: I('bread', 'Bread'),
+  turkey: I('turkey', 'Turkey'),
+} as const
+
+const RECIPES: Recipe[] = [
+  { name: 'Burger', ingredients: [INGREDIENTS.bottomBun, INGREDIENTS.patty, INGREDIENTS.cheese, INGREDIENTS.lettuce, INGREDIENTS.tomato, INGREDIENTS.ketchup, INGREDIENTS.topBun] },
+  { name: 'Ice Cream Sundae', ingredients: [INGREDIENTS.iceCream, INGREDIENTS.chocolate, INGREDIENTS.whipped, INGREDIENTS.sprinkles, INGREDIENTS.cherry] },
+  { name: 'Cookies', ingredients: [INGREDIENTS.flour, INGREDIENTS.butter, INGREDIENTS.sugar, INGREDIENTS.egg, INGREDIENTS.chips] },
+  { name: 'Pizza', ingredients: [INGREDIENTS.dough, INGREDIENTS.sauce, INGREDIENTS.cheese, INGREDIENTS.pepperoni] },
+  { name: 'Pancakes', ingredients: [INGREDIENTS.pancake, INGREDIENTS.syrup, INGREDIENTS.butter, INGREDIENTS.berries] },
+  { name: 'Taco', ingredients: [INGREDIENTS.shell, INGREDIENTS.beef, INGREDIENTS.cheese, INGREDIENTS.lettuce, INGREDIENTS.salsa] },
+  { name: 'Cupcake', ingredients: [INGREDIENTS.cake, INGREDIENTS.frosting, INGREDIENTS.sprinkles, INGREDIENTS.cherry] },
+  { name: 'Sandwich', ingredients: [INGREDIENTS.bread, INGREDIENTS.turkey, INGREDIENTS.cheese, INGREDIENTS.lettuce, INGREDIENTS.tomato, INGREDIENTS.bread] },
+]
+
+const DIFFICULTY: Record<Difficulty, { max: number; demoMs: number }> = {
+  easy: { max: 4, demoMs: 900 },
+  mid: { max: 5, demoMs: 700 },
+  hard: { max: 7, demoMs: 520 },
+}
+
+function shuffled(items: Ingredient[], seed: number) {
+  const next = [...items]
   let state = (Math.floor(seed * 1000) || 1) >>> 0
-  const nextRandom = () => {
+  const random = () => {
     state = (state * 1664525 + 1013904223) >>> 0
     return state / 0x100000000
   }
-
   for (let index = next.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(nextRandom() * (index + 1))
+    const swap = Math.floor(random() * (index + 1))
     ;[next[index], next[swap]] = [next[swap], next[index]]
   }
   return next
 }
 
+function IngredientArt({ ingredient }: { ingredient: Ingredient }) {
+  return <span className={`ingredient-art art-${ingredient.art}`} aria-hidden="true"><i /><b /><em /></span>
+}
+
+function RecipePreview({ recipe }: { recipe: Recipe }) {
+  return <span className="recipe-preview">{recipe.ingredients.slice(0, 4).map((item, index) => <IngredientArt key={`${item.id}-${index}`} ingredient={item} />)}</span>
+}
+
 export default function RichieBakeryPage() {
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [recipe, setRecipe] = useState<Recipe | null>(null)
+  const [roundIngredients, setRoundIngredients] = useState<Ingredient[]>([])
   const [phase, setPhase] = useState<Phase>('choose')
   const [demoIndex, setDemoIndex] = useState(0)
-  const [built, setBuilt] = useState<string[]>([])
+  const [built, setBuilt] = useState<Ingredient[]>([])
   const [wrong, setWrong] = useState<string | null>(null)
-  const [pantry, setPantry] = useState<string[]>([])
+  const [pantry, setPantry] = useState<Ingredient[]>([])
   const timerRef = useRef<number | null>(null)
   const { setStatus } = useGamePlayers()
 
   useEffect(() => {
-    setStatus({ competitive: false, label: phase === 'choose' ? 'PICK A DISH' : phase === 'demo' ? 'WATCH' : phase === 'build' ? 'YOUR TURN' : 'NICE!' })
+    setStatus({ competitive: false, label: phase === 'choose' ? 'PICK A DISH' : phase === 'demo' ? 'WATCH THE ORDER' : phase === 'build' ? 'REBUILD IT' : 'ORDER UP' })
   }, [phase, setStatus])
 
   useEffect(() => {
-    if (phase !== 'demo' || !recipe) return undefined
-    if (demoIndex >= recipe.ingredients.length) {
+    if (phase !== 'demo' || roundIngredients.length === 0) return undefined
+    if (demoIndex >= roundIngredients.length) {
       timerRef.current = window.setTimeout(() => {
         setBuilt([])
         setPhase('build')
-      }, 650)
-      return () => { if (timerRef.current) window.clearTimeout(timerRef.current) }
+      }, 550)
+      return () => { if (timerRef.current !== null) window.clearTimeout(timerRef.current) }
     }
-    timerRef.current = window.setTimeout(() => setDemoIndex((value) => value + 1), 700)
-    return () => { if (timerRef.current) window.clearTimeout(timerRef.current) }
-  }, [demoIndex, phase, recipe])
+    timerRef.current = window.setTimeout(() => setDemoIndex((value) => value + 1), DIFFICULTY[difficulty].demoMs)
+    return () => { if (timerRef.current !== null) window.clearTimeout(timerRef.current) }
+  }, [demoIndex, difficulty, phase, roundIngredients.length])
 
-  function choose(next: Recipe, seed: number) {
+  function choose(nextRecipe: Recipe, seed: number) {
     playTap()
-    setRecipe(next)
+    const selected = nextRecipe.ingredients.slice(0, DIFFICULTY[difficulty].max)
+    setRecipe(nextRecipe)
+    setRoundIngredients(selected)
     setDemoIndex(0)
     setBuilt([])
     setWrong(null)
-    setPantry(shuffledUnique(next.ingredients, seed))
+    setPantry(shuffled(selected, seed))
     setPhase('demo')
   }
 
-  function addIngredient(ingredient: string) {
+  function addIngredient(ingredient: Ingredient) {
     if (!recipe || phase !== 'build') return
-    const expected = recipe.ingredients[built.length]
-    if (ingredient !== expected) {
-      setWrong(ingredient)
-      window.setTimeout(() => setWrong(null), 400)
+    const expected = roundIngredients[built.length]
+    if (!expected || ingredient.id !== expected.id) {
+      setWrong(ingredient.id)
+      window.setTimeout(() => setWrong(null), 420)
       return
     }
     playTap()
     const next = [...built, ingredient]
     setBuilt(next)
-    if (next.length === recipe.ingredients.length) {
+    if (next.length === roundIngredients.length) {
       playWin()
       setPhase('done')
     }
   }
 
-
   return (
     <main className="bakery-game">
       <header className="bakery-topbar">
-        <Link to="/" className="bakery-home">← Games</Link>
-        <h1>Richie Loco's Bakery</h1>
+        <Link to="/" className="bakery-home">Games</Link>
+        <div><span>Rosie remembers the recipe</span><h1>Rosie's Bakery</h1></div>
         <button type="button" onClick={() => setPhase('choose')}>Menu</button>
       </header>
 
       <section className="bakery-stage">
-        <img className="bakery-richie" src="/characters/richie-loco.png" alt="Richie Loco" />
-        <img className="bakery-demi" src="/characters/uncle-demi.png" alt="Uncle Demi" />
+        <img className="bakery-rosie bakery-rosie--left" src="/characters/rosie.png" alt="Rosie the unicorn" draggable={false} />
+        <img className="bakery-rosie bakery-rosie--right" src="/characters/rosie.png" alt="" draggable={false} />
 
         {phase === 'choose' ? (
           <div className="bakery-menu">
-            <h2>What should we make?</h2>
-            <div>{RECIPES.map((item) => <button type="button" key={item.name} onClick={(event) => choose(item, event.timeStamp)}><span>{item.emoji}</span><strong>{item.name}</strong></button>)}</div>
+            <div className="bakery-menu__top">
+              <h2>What should Rosie make?</h2>
+              <div className="bakery-difficulty" aria-label="Difficulty">
+                {(['easy', 'mid', 'hard'] as Difficulty[]).map((level) => <button type="button" key={level} className={difficulty === level ? 'is-active' : ''} onClick={() => setDifficulty(level)}>{level}</button>)}
+              </div>
+            </div>
+            <div className="bakery-recipes">{RECIPES.map((item) => <button type="button" key={item.name} onClick={(event) => choose(item, event.timeStamp)}><RecipePreview recipe={item} /><strong>{item.name}</strong></button>)}</div>
           </div>
         ) : recipe ? (
           <div className="bakery-workbench">
-            <div className="bakery-order"><span>{recipe.emoji}</span><strong>{recipe.name}</strong></div>
+            <div className="bakery-order"><strong>{recipe.name}</strong><span>{difficulty}</span></div>
             <div className="bakery-plate" aria-label="Plate">
-              {phase === 'demo' && recipe.ingredients.slice(0, demoIndex).map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}
-              {phase !== 'demo' && built.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}
-              {phase === 'done' && <b>{recipe.emoji}</b>}
+              {(phase === 'demo' ? roundIngredients.slice(0, demoIndex) : built).map((item, index) => <span className="bakery-layer" key={`${item.id}-${index}`}><IngredientArt ingredient={item} /><small>{item.label}</small></span>)}
             </div>
 
-            {phase === 'demo' && <div className="bakery-demo"><strong>WATCH THE ORDER</strong><span>{recipe.ingredients[demoIndex] || 'Ready?'}</span></div>}
-            {phase === 'build' && <div className="bakery-pantry">{pantry.map((item) => <button type="button" className={wrong === item ? 'is-wrong' : ''} key={item} onClick={() => addIngredient(item)}>{item}</button>)}</div>}
-            {phase === 'done' && <div className="bakery-done"><strong>ORDER UP!</strong><button type="button" onClick={() => setPhase('choose')}>Make another</button></div>}
+            {phase === 'demo' && <div className="bakery-demo"><strong>WATCH THE ORDER</strong><span>{roundIngredients[demoIndex]?.label || 'Ready?'}</span></div>}
+            {phase === 'build' && <div className="bakery-pantry">{pantry.map((item, index) => <button type="button" className={wrong === item.id ? 'is-wrong' : ''} key={`${item.id}-${index}`} onClick={() => addIngredient(item)}><IngredientArt ingredient={item} /><strong>{item.label}</strong></button>)}</div>}
+            {phase === 'done' && <div className="bakery-done"><strong>ORDER UP</strong><button type="button" onClick={() => setPhase('choose')}>Make another</button></div>}
           </div>
         ) : null}
       </section>

@@ -1,83 +1,139 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { playCorrect, playTap, playWrong } from '../../shared/sound'
-import '../new-games.css'
+import { playTap, playWrong } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './FreezeDancePage.css'
 
-type Phase = 'dance' | 'freeze' | 'result'
+type Difficulty = 'easy' | 'mid' | 'hard'
+type WheelCount = 6 | 12 | 24 | 48
+type Wheel = { id: number; remaining: number }
+
+const LIFE: Record<Difficulty, number> = { easy: 7200, mid: 4800, hard: 3200 }
+const COUNTS: WheelCount[] = [6, 12, 24, 48]
+
+function freshWheels(count: WheelCount, life: number): Wheel[] {
+  return Array.from({ length: count }, (_, id) => ({ id, remaining: life }))
+}
 
 export default function FreezeDancePage() {
-  const [phase, setPhase] = useState<Phase>('dance')
-  const [score, setScore] = useState(0)
-  const [message, setMessage] = useState('DANCE!')
+  const [difficulty, setDifficulty] = useState<Difficulty>('mid')
+  const [wheelCount, setWheelCount] = useState<WheelCount>(12)
+  const [wheels, setWheels] = useState<Wheel[]>(() => freshWheels(12, LIFE.mid))
+  const [running, setRunning] = useState(false)
+  const [gameOver, setGameOver] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const lastTickRef = useRef(0)
+  const elapsedRef = useRef(0)
   const timerRef = useRef<number | null>(null)
-  const freezeAtRef = useRef(0)
-
-  function scheduleFreeze() {
-    if (timerRef.current) window.clearTimeout(timerRef.current)
-    const delay = 1600 + Math.random() * 2400
-    timerRef.current = window.setTimeout(() => {
-      freezeAtRef.current = performance.now()
-      setPhase('freeze')
-      setMessage('FREEZE!')
-      playTap()
-      timerRef.current = window.setTimeout(() => {
-        setPhase('result')
-        setMessage('TOO SLOW!')
-        playWrong()
-      }, 850)
-    }, delay)
-  }
+  const { setStatus } = useGamePlayers()
 
   useEffect(() => {
-    scheduleFreeze()
-    return () => { if (timerRef.current) window.clearTimeout(timerRef.current) }
-  }, [])
+    setStatus({ competitive: false, label: gameOver ? `STOPPED · ${(elapsed / 1000).toFixed(1)}s` : running ? `${wheelCount} WHEELS SPINNING` : 'SET YOUR WHEELS' })
+  }, [elapsed, gameOver, running, setStatus, wheelCount])
 
-  function tap() {
-    if (phase === 'dance') {
-      setScore(0)
-      setPhase('result')
-      setMessage('TOO EARLY!')
-      playWrong()
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      return
+  useEffect(() => {
+    if (!running) return undefined
+    lastTickRef.current = performance.now()
+
+    timerRef.current = window.setInterval(() => {
+      const now = performance.now()
+      const dt = Math.min(180, now - lastTickRef.current)
+      lastTickRef.current = now
+      elapsedRef.current += dt
+      setElapsed(elapsedRef.current)
+
+      setWheels((current) => {
+        const next = current.map((wheel) => ({ ...wheel, remaining: Math.max(0, wheel.remaining - dt) }))
+        if (next.some((wheel) => wheel.remaining <= 0)) {
+          setRunning(false)
+          setGameOver(true)
+          playWrong()
+        }
+        return next
+      })
+    }, 100)
+
+    return () => {
+      if (timerRef.current !== null) window.clearInterval(timerRef.current)
     }
-    if (phase === 'freeze') {
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      const reaction = Math.round(performance.now() - freezeAtRef.current)
-      setScore((value) => value + 1)
-      setPhase('result')
-      setMessage(`${reaction} ms!`)
-      playCorrect()
-    }
+  }, [running])
+
+  function start() {
+    const life = LIFE[difficulty]
+    elapsedRef.current = 0
+    setElapsed(0)
+    setWheels(freshWheels(wheelCount, life))
+    setGameOver(false)
+    setRunning(true)
+    playTap()
   }
 
-  function nextRound() {
-    setPhase('dance')
-    setMessage('DANCE!')
-    scheduleFreeze()
+  function refreshWheel(id: number) {
+    if (!running) return
+    playTap()
+    const life = LIFE[difficulty]
+    setWheels((current) => current.map((wheel) => wheel.id === id ? { ...wheel, remaining: life } : wheel))
   }
+
+  function changeCount(count: WheelCount) {
+    if (running) return
+    setWheelCount(count)
+    setWheels(freshWheels(count, LIFE[difficulty]))
+  }
+
+  function changeDifficulty(next: Difficulty) {
+    if (running) return
+    setDifficulty(next)
+    setWheels(freshWheels(wheelCount, LIFE[next]))
+  }
+
+  const life = LIFE[difficulty]
 
   return (
-    <main className="new-game freeze-game">
-      <header className="new-game__topbar">
-        <Link to="/" className="new-game__home">← Games</Link>
-        <h1>Freeze Dance</h1>
-        <div className="new-game__stat"><span>Wins</span><strong>{score}</strong></div>
+    <main className="wheels-game">
+      <header className="wheels-topbar">
+        <Link to="/" className="wheels-home">Games</Link>
+        <div><span>Richie Loco + Bogus host</span><h1>Skateboard Wheels</h1></div>
+        <div className="wheels-time">{(elapsed / 1000).toFixed(1)}s</div>
       </header>
-      <section className={`new-game__stage freeze-stage is-${phase}`} onPointerDown={tap}>
-        <div className="freeze-disco">◉</div>
-        <div className="freeze-note freeze-note--one">♪</div>
-        <div className="freeze-note freeze-note--two">♫</div>
-        <div className="freeze-note freeze-note--three">♪</div>
-        <div className="freeze-floor" />
-        <img className="freeze-character" src="/characters/party-james-lewis.png" alt="Party James Lewis" draggable={false} />
-        <div className="freeze-command">{message}</div>
-        <div className="freeze-instruction">{phase === 'dance' ? 'Wait for FREEZE — do not tap yet' : phase === 'freeze' ? 'TAP NOW!' : 'Tap the button for the next round'}</div>
-        {phase === 'result' && (
-          <button type="button" className="new-game__button freeze-next" onPointerDown={(event) => { event.stopPropagation(); nextRound() }}>Next round</button>
-        )}
+
+      <section className="wheels-stage">
+        <div className="wheels-park" aria-hidden="true"><i /><b /><em /></div>
+
+        <div className="wheels-host wheels-host--left">
+          <span className="wheels-helmet" />
+          <img src="/characters/richie-loco.png" alt="Richie Loco in skateboard gear" draggable={false} />
+          <span className="wheels-pad wheels-pad--one" /><span className="wheels-pad wheels-pad--two" />
+          <strong>Richie Loco</strong>
+        </div>
+        <div className="wheels-host wheels-host--right">
+          <span className="wheels-helmet" />
+          <img src="/characters/bogus.png" alt="Bogus in skateboard gear" draggable={false} />
+          <span className="wheels-pad wheels-pad--one" /><span className="wheels-pad wheels-pad--two" />
+          <strong>Bogus</strong>
+        </div>
+
+        <div className="wheels-controls">
+          <div><span>Mode</span>{(['easy', 'mid', 'hard'] as Difficulty[]).map((level) => <button type="button" disabled={running} className={difficulty === level ? 'is-active' : ''} key={level} onClick={() => changeDifficulty(level)}>{level}</button>)}</div>
+          <div><span>Wheels</span>{COUNTS.map((count) => <button type="button" disabled={running} className={wheelCount === count ? 'is-active' : ''} key={count} onClick={() => changeCount(count)}>{count}</button>)}</div>
+        </div>
+
+        <div className={`wheels-grid is-count-${wheelCount}`}>
+          {wheels.map((wheel) => {
+            const ratio = wheel.remaining / life
+            const speedClass = ratio > .66 ? 'is-fast' : ratio > .33 ? 'is-mid' : 'is-slow'
+            const face = wheel.id % 2 === 0 ? '/characters/richie-loco.png' : '/characters/bogus.png'
+            return (
+              <button type="button" className={`skate-wheel ${speedClass} ${wheel.remaining <= 0 ? 'is-stopped' : ''}`} key={wheel.id} onPointerDown={() => refreshWheel(wheel.id)} aria-label={`Wheel ${wheel.id + 1}`}>
+                <span className="skate-wheel__spinner"><i /><b /><em /></span>
+                <img src={face} alt="" draggable={false} />
+              </button>
+            )
+          })}
+        </div>
+
+        {!running && !gameOver && <div className="wheels-overlay"><strong>KEEP EVERY WHEEL SPINNING</strong><span>Tap a wheel before it slows to a stop.</span><button type="button" onClick={start}>Start</button></div>}
+        {gameOver && <div className="wheels-overlay is-over"><strong>A WHEEL STOPPED</strong><span>You kept {wheelCount} wheels moving for {(elapsed / 1000).toFixed(1)} seconds.</span><button type="button" onClick={start}>Again</button></div>}
       </section>
     </main>
   )

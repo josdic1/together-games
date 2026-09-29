@@ -84,7 +84,7 @@ export default function SnailRacePage() {
 
       <section className="new-game__stage snail-stage" onPointerDown={boost}>
         <div className="snail-sun">☀</div>
-        <div className="snail-finish">🏁</div>
+        <div className="snail-finish" aria-label="Finish line"><span /><span /></div>
         <div className="snail-lane snail-lane--roy">
           <img style={{ left: `calc(${Math.min(roy, 90)}% - 42px)` }} src="/characters/roy.png" alt="Roy" draggable={false} />
           <span>ROY — TAP ANYWHERE!</span>

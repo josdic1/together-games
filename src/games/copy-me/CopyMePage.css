@@ -11,6 +11,7 @@
     auto
     auto
     auto
+    auto
     minmax(0, 1fr)
     auto;
 
@@ -59,6 +60,16 @@
 .copy-me-reset {
   justify-self: end;
 }
+
+
+.copy-me-length {
+  width: fit-content; margin: 0 auto; padding: 4px 6px; display:flex; align-items:center; gap:4px;
+  border:3px solid var(--ink); border-radius:999px; background:var(--paper); box-shadow:0 3px 0 rgb(42 33 24 / 15%);
+}
+.copy-me-length > span { padding:0 7px; font-size:.65rem; text-transform:uppercase; }
+.copy-me-length button { width:34px; height:30px; border:2px solid var(--ink); border-radius:999px; background:#fff; font:inherit; font-size:.72rem; cursor:pointer; }
+.copy-me-length button.is-active { background:var(--sun); }
+.copy-me-length button:disabled { opacity:.55; cursor:default; }
 
 /* SCORE */
 
