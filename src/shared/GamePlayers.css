@@ -1,169 +1,35 @@
 .player-dock {
   position: fixed;
-  z-index: 900;
+  z-index: 500;
   left: 50%;
   bottom: max(8px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: min(720px, calc(100vw - 24px));
-  height: 54px;
+  min-height: 56px;
   display: grid;
-  grid-template-columns: 1fr 1.1fr 1fr;
+  grid-template-columns: 1fr 1.2fr 1fr;
   gap: 6px;
   padding: 5px;
   border: 3px solid #171717;
-  border-radius: 18px 15px 20px 16px;
-  background: rgb(255 253 248 / .96);
-  box-shadow: 4px 5px 0 #171717;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 #171717;
   pointer-events: auto;
 }
-
-.player-dock button,
-.player-dock input {
-  font: inherit;
-}
-
-.player-dock__player,
-.player-dock__status {
-  min-width: 0;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: #171717;
-}
-
-.player-dock__player {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 4px 8px;
-}
-
-.player-dock__player strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(.72rem, 2vw, .95rem);
-}
-
-.player-dock__player--one { background: #dff7ff; }
-.player-dock__player--two { background: #ffe0ec; }
-
-.player-dock__dot {
-  flex: 0 0 auto;
-  width: 13px;
-  height: 13px;
-  border: 2px solid #171717;
-  border-radius: 50%;
-  background: #20b9df;
-}
-.player-dock__player--two .player-dock__dot { background: #ff5a86; }
-
-.player-dock__player.is-turn {
-  outline: 4px solid #ffe33b;
-  animation: player-turn-pulse 850ms ease-in-out infinite;
-}
-
-.player-dock__player.is-leading::before {
-  content: '★';
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-8deg);
-  font-size: 21px;
-  color: #ffe33b;
-  -webkit-text-stroke: 2px #171717;
-  paint-order: stroke fill;
-}
-
-.player-dock__leader {
-  font-size: .54rem;
-  white-space: nowrap;
-}
-
-.player-dock__status {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  padding: 3px 8px;
-  background: #ffe33b;
-  border: 2px solid #171717;
-}
-
-.player-dock__status span {
-  font-size: .55rem;
-  letter-spacing: .08em;
-}
-
-.player-dock__status strong {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(.72rem, 2.2vw, 1rem);
-}
-
-.player-dock__editor {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translateX(-50%);
-  width: min(520px, calc(100vw - 24px));
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
-  padding: 10px;
-  border: 3px solid #171717;
-  border-radius: 16px;
-  background: #fffdf8;
-  box-shadow: 4px 5px 0 #171717;
-}
-
-.player-dock__editor label {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-  font-size: .65rem;
-}
-
-.player-dock__editor input {
-  width: 100%;
-  min-width: 0;
-  height: 38px;
-  border: 2px solid #171717;
-  border-radius: 10px;
-  padding: 0 9px;
-  background: white;
-  color: #171717;
-  user-select: text;
-  touch-action: manipulation;
-}
-
-.player-dock__editor > button {
-  align-self: end;
-  height: 38px;
-  border: 2px solid #171717;
-  border-radius: 10px;
-  padding: 0 12px;
-  background: #ffe33b;
-}
-
-@keyframes player-turn-pulse {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2px) scale(1.025); }
-}
-
-@media (max-width: 560px) {
-  .player-dock { height: 48px; width: calc(100vw - 12px); bottom: 4px; }
-  .player-dock__leader { display: none; }
-  .player-dock__editor { grid-template-columns: 1fr 1fr; }
-  .player-dock__editor > button { grid-column: 1 / -1; }
-}
-
-#root:has(.player-dock) > main {
-  padding-bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px)) !important;
-}
-
-/* Deliberately loud: turn ownership must be impossible to miss. */
-.turn-beacon{position:fixed;z-index:880;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);min-width:min(460px,calc(100vw - 28px));padding:7px 24px 8px;display:grid;place-items:center;border:4px solid #171717;border-radius:18px;box-shadow:5px 6px 0 #171717;color:#171717;pointer-events:none;animation:turn-beacon-pop .34s cubic-bezier(.2,1.7,.3,1),turn-beacon-pulse 1s ease-in-out .34s infinite}.turn-beacon--1{background:#54d3f0}.turn-beacon--2{background:#ff6f9b}.turn-beacon span{font-size:.62rem;font-weight:900;letter-spacing:.18em;line-height:1;text-transform:uppercase}.turn-beacon strong{font-size:clamp(1.25rem,3vw,2rem);line-height:1;text-transform:uppercase;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.player-dock__player.is-turn{outline:5px solid #171717;box-shadow:inset 0 0 0 5px #ffe33b,0 0 0 5px #ffe33b;transform:scale(1.035);animation:player-turn-pulse 700ms ease-in-out infinite}.player-dock__player:not(.is-turn){opacity:.68}.player-dock__status strong{font-size:clamp(.82rem,2.5vw,1.15rem);text-transform:uppercase}@keyframes turn-beacon-pop{from{transform:translateX(-50%) scale(.5);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}@keyframes turn-beacon-pulse{0%,100%{box-shadow:5px 6px 0 #171717,0 0 0 0 rgb(255 227 59/.45)}50%{box-shadow:5px 6px 0 #171717,0 0 0 11px rgb(255 227 59/0)}}@media(max-width:560px){.turn-beacon{top:4px;min-width:calc(100vw - 18px);padding:5px 12px;border-width:3px}.turn-beacon strong{font-size:1rem}.turn-beacon span{font-size:.45rem}}
+.player-dock button,.player-dock input{font:inherit}
+.player-dock__player,.player-dock__status{min-width:0;border:0;border-radius:12px;color:#171717}
+.player-dock__player{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;padding:5px 8px;transition:opacity 120ms ease,transform 120ms ease,box-shadow 120ms ease}
+.player-dock__player strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(.72rem,2vw,.95rem)}
+.player-dock__player--one{background:#dff7ff}.player-dock__player--two{background:#ffe0ec}
+.player-dock__dot{flex:0 0 auto;width:13px;height:13px;border:2px solid #171717;border-radius:50%;background:#20b9df}.player-dock__player--two .player-dock__dot{background:#ff5a86}
+.player-dock:has(.player-dock__player.is-turn) .player-dock__player:not(.is-turn){opacity:.48}
+.player-dock__player.is-turn{transform:translateY(-2px) scale(1.03);box-shadow:0 0 0 4px #171717,0 0 0 8px #ffe33b;animation:player-turn-pulse 900ms ease-in-out infinite}
+.player-dock__leader{position:absolute;top:-13px;right:7px;padding:2px 6px;border:2px solid #171717;border-radius:999px;background:#ffe33b;font-size:.48rem;line-height:1;white-space:nowrap}
+.player-dock__status{display:grid;place-items:center;align-content:center;padding:4px 8px;background:#ffe33b;border:2px solid #171717;cursor:pointer}
+.player-dock__status span{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase}.player-dock__status strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(.78rem,2.2vw,1.05rem)}
+.player-dock:has(.player-dock__player--one.is-turn) .player-dock__status{background:#77ddf5}.player-dock:has(.player-dock__player--two.is-turn) .player-dock__status{background:#ff8faf}
+.player-dock__editor{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:min(520px,calc(100vw - 24px));display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:10px;border:3px solid #171717;border-radius:16px;background:#fffdf8;box-shadow:4px 5px 0 #171717}
+.player-dock__editor label{min-width:0;display:grid;gap:3px;font-size:.65rem}.player-dock__editor input{width:100%;min-width:0;height:38px;border:2px solid #171717;border-radius:10px;padding:0 9px;background:#fff;color:#171717;user-select:text;touch-action:manipulation}.player-dock__editor>button{align-self:end;height:38px;border:2px solid #171717;border-radius:10px;padding:0 12px;background:#ffe33b}
+@keyframes player-turn-pulse{0%,100%{transform:translateY(-2px) scale(1.03)}50%{transform:translateY(-3px) scale(1.045)}}
+@media(max-width:560px){.player-dock{min-height:48px;width:calc(100vw - 12px);bottom:4px}.player-dock__leader{display:none}.player-dock__editor{grid-template-columns:1fr 1fr}.player-dock__editor>button{grid-column:1/-1}}
+#root:has(.player-dock)>main{padding-bottom:max(72px,calc(env(safe-area-inset-bottom) + 64px))!important}

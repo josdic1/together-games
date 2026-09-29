@@ -65,13 +65,6 @@ export function GamePlayersProvider({ children }: { children: ReactNode }) {
     <GamePlayersContext.Provider value={value}>
       {children}
 
-      {status.competitive && status.currentPlayer && (
-        <div className={`turn-beacon turn-beacon--${status.currentPlayer}`} role="status" aria-live="polite">
-          <span>YOUR TURN</span>
-          <strong>{names[status.currentPlayer]}</strong>
-        </div>
-      )}
-
       <aside className={`player-dock ${editing ? 'is-editing' : ''}`} aria-label="Players">
           <button
             type="button"
@@ -80,7 +73,7 @@ export function GamePlayersProvider({ children }: { children: ReactNode }) {
           >
             <span className="player-dock__dot" />
             <strong>{names[1]}</strong>
-            {leader === 1 && <span className="player-dock__leader">★ LEAD</span>}
+            {leader === 1 && <span className="player-dock__leader">LEAD</span>}
           </button>
 
           <button
@@ -91,7 +84,7 @@ export function GamePlayersProvider({ children }: { children: ReactNode }) {
             <span>{status.label || (status.competitive ? 'TURN' : 'PLAYERS')}</span>
             <strong>
               {status.currentPlayer
-                ? `${names[status.currentPlayer]}'s turn`
+                ? `${names[status.currentPlayer]} — YOUR TURN`
                 : status.competitive
                   ? 'Ready'
                   : 'Rename'}
@@ -105,7 +98,7 @@ export function GamePlayersProvider({ children }: { children: ReactNode }) {
           >
             <span className="player-dock__dot" />
             <strong>{names[2]}</strong>
-            {leader === 2 && <span className="player-dock__leader">★ LEAD</span>}
+            {leader === 2 && <span className="player-dock__leader">LEAD</span>}
           </button>
 
           {editing && (

@@ -101,11 +101,11 @@
 }
 
 .copy-me-score--one.is-active {
-  background: var(--tomato);
+  background: #77ddf5;
 }
 
 .copy-me-score--two.is-active {
-  background: var(--sea);
+  background: #ff8faf;
 }
 
 .copy-me-score > strong {
