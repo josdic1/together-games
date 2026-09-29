@@ -75,16 +75,12 @@ function shuffled(items: Ingredient[], seed: number) {
 }
 
 function IngredientArt({ ingredient }: { ingredient: Ingredient }) {
-  return <span className={`ingredient-art art-${ingredient.art}`} aria-hidden="true"><i /><b /><em /></span>
+  return <img className="ingredient-art ingredient-art--drawn" src={`/art/bakery-ingredients/${ingredient.art}.svg`} alt="" draggable={false} />
 }
 
 function RecipePreview({ recipe }: { recipe: Recipe }) {
-  const slug = recipe.name.toLowerCase().replaceAll(' ', '-').replaceAll('cream-', 'cream-')
-  return (
-    <span className={`recipe-preview recipe-food recipe-food--${slug}`} aria-hidden="true">
-      <i /><b /><em /><span className="recipe-food__detail" />
-    </span>
-  )
+  const slug = recipe.name.toLowerCase().replaceAll(' ', '-')
+  return <img className="recipe-preview recipe-preview--dish" src={`/art/bakery-dishes/${slug}.svg`} alt="" draggable={false} />
 }
 
 export default function RichieBakeryPage() {

@@ -65,6 +65,13 @@ export function GamePlayersProvider({ children }: { children: ReactNode }) {
     <GamePlayersContext.Provider value={value}>
       {children}
 
+      {status.competitive && status.currentPlayer && (
+        <div className={`turn-beacon turn-beacon--${status.currentPlayer}`} role="status" aria-live="polite">
+          <span>YOUR TURN</span>
+          <strong>{names[status.currentPlayer]}</strong>
+        </div>
+      )}
+
       <aside className={`player-dock ${editing ? 'is-editing' : ''}`} aria-label="Players">
           <button
             type="button"
