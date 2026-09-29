@@ -9,6 +9,7 @@ import {
   type Character,
 } from '../../content/characters'
 import { playTap, playCorrect, playWrong } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './CopyMePage.css'
 
 type Phase = 'create' | 'copy' | 'result'
@@ -82,6 +83,17 @@ export default function CopyMePage() {
 
   const copier =
     maker === 1 ? 2 : 1
+
+  const { setStatus } = useGamePlayers()
+
+  useEffect(() => {
+    setStatus({
+      competitive: true,
+      currentPlayer: phase === 'create' ? maker : phase === 'copy' ? copier : null,
+      scores,
+      label: phase === 'create' ? 'MAKE THE PATTERN' : phase === 'copy' ? 'COPY IT' : 'ROUND OVER',
+    })
+  }, [copier, maker, phase, scores, setStatus])
 
   useEffect(() => {
     if (hintCooldown <= 0) {

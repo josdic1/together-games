@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { playCorrect, playTap, playWin, playWrong } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 import '../new-games.css'
 import './SnailRacePage.css'
 
@@ -13,6 +14,16 @@ export default function SnailRacePage() {
   const rivalRef = useRef<number | null>(null)
   const royRef = useRef(0)
   const nickelRef = useRef(0)
+  const { setStatus } = useGamePlayers()
+
+  useEffect(() => {
+    setStatus({
+      competitive: true,
+      currentPlayer: null,
+      scores: { 1: Math.round(roy), 2: Math.round(nickel) },
+      label: winner ? 'FINISH' : 'RACE!',
+    })
+  }, [nickel, roy, setStatus, winner])
 
   useEffect(() => {
     if (winner) return

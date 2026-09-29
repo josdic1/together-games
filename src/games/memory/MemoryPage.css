@@ -1,7 +1,7 @@
 .memory-game {
   width: min(100%, 1120px);
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100svh;
+  max-height: 100svh;
 
   margin: 0 auto;
   padding: 8px 20px 12px;

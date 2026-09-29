@@ -1,6 +1,6 @@
 .cake-drop-game {
   width: min(100%, 1120px);
-  height: 100dvh;
+  height: 100svh;
 
   margin: 0 auto;
   padding: 18px 24px 22px;
@@ -1713,18 +1713,20 @@
 
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
 
-  gap: 8px;
+  gap: clamp(3px, .7vh, 8px);
 
-  overflow-y: auto;
+  overflow: hidden;
 
-  padding: 4px 2px 8px;
+  padding: 4px 2px;
 }
 
 .cake-drop-select-choice {
   min-width: 0;
 
-  aspect-ratio: 1;
+  min-height: 0;
+  height: 100%;
 
   padding: 4px;
 

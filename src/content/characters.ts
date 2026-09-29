@@ -31,4 +31,5 @@ export const characters: Character[] = [
   { id: 'bad-joshua-david', name: 'Bad Joshua David', image: '/characters/bad-joshua-david.png', family: 'joshua-david' },
   { id: 'bogus', name: 'Bogus', image: '/characters/bogus.png' },
   { id: 'uncle-demi', name: 'Uncle Demi', image: '/characters/uncle-demi.png' },
+  { id: 'rascal', name: 'Rascal', image: '/characters/rascal.png' },
 ]

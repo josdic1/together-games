@@ -1,6 +1,6 @@
 .bug-jump-game {
   width: min(100%, 1120px);
-  height: 100dvh;
+  height: 100svh;
   margin: 0 auto;
   padding: 18px 24px 22px;
 
@@ -171,20 +171,20 @@
       minmax(0, 1fr)
     );
 
-  gap: 10px;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
 
-  overflow-y: auto;
+  gap: clamp(4px, 1vh, 10px);
 
-  padding:
-    5px
-    4px
-    12px;
+  overflow: hidden;
+
+  padding: 4px;
 }
 
 .bug-jump-choice {
   min-width: 0;
 
-  aspect-ratio: 1;
+  min-height: 0;
+  height: 100%;
 
   padding: 5px;
 

@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   characters,
   type Character,
 } from '../../content/characters'
 import { playTap, playCorrect, playWrong, playWin } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './MemoryPage.css'
 
 type Card = Character & {
@@ -15,13 +16,18 @@ type Card = Character & {
 const memoryCharacters = characters.slice(0, 18)
 
 function makeDeck(): Card[] {
-  return [...memoryCharacters, ...memoryCharacters]
-    .map((character, index) => ({
-      ...character,
-      cardId: `${character.id}-${index}`,
-      matched: false,
-    }))
-    .sort(() => Math.random() - 0.5)
+  const deck = [...memoryCharacters, ...memoryCharacters].map((character, index) => ({
+    ...character,
+    cardId: `${character.id}-${index}`,
+    matched: false,
+  }))
+
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]]
+  }
+
+  return deck
 }
 
 export default function MemoryPage() {
@@ -30,6 +36,18 @@ export default function MemoryPage() {
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1)
   const [scores, setScores] = useState({ 1: 0, 2: 0 })
   const [locked, setLocked] = useState(false)
+  const mismatchTimerRef = useRef<number | null>(null)
+  const { names, setStatus } = useGamePlayers()
+
+  useEffect(() => {
+    setStatus({ competitive: true, currentPlayer, scores, label: 'MATCH A PAIR' })
+  }, [currentPlayer, scores, setStatus])
+
+  useEffect(() => () => {
+    if (mismatchTimerRef.current !== null) {
+      window.clearTimeout(mismatchTimerRef.current)
+    }
+  }, [])
 
   function handleCardClick(index: number) {
     const card = cards[index]
@@ -86,14 +104,20 @@ export default function MemoryPage() {
     playWrong()
     setLocked(true)
 
-    window.setTimeout(() => {
+    mismatchTimerRef.current = window.setTimeout(() => {
       setSelected([])
       setCurrentPlayer((player) => (player === 1 ? 2 : 1))
       setLocked(false)
+      mismatchTimerRef.current = null
     }, 900)
   }
 
   function restartGame() {
+    if (mismatchTimerRef.current !== null) {
+      window.clearTimeout(mismatchTimerRef.current)
+      mismatchTimerRef.current = null
+    }
+
     setCards(makeDeck())
     setSelected([])
     setCurrentPlayer(1)
@@ -123,7 +147,7 @@ export default function MemoryPage() {
             currentPlayer === 1 ? 'is-active' : ''
           }`}
         >
-          <span className="memory-player-label">Player 1</span>
+          <span className="memory-player-label">{names[1]}</span>
           <strong>{scores[1]}</strong>
           {currentPlayer === 1 && (
             <span className="memory-turn-label">Your turn!</span>
@@ -135,7 +159,7 @@ export default function MemoryPage() {
             currentPlayer === 2 ? 'is-active' : ''
           }`}
         >
-          <span className="memory-player-label">Player 2</span>
+          <span className="memory-player-label">{names[2]}</span>
           <strong>{scores[2]}</strong>
           {currentPlayer === 2 && (
             <span className="memory-turn-label">Your turn!</span>
@@ -173,7 +197,7 @@ export default function MemoryPage() {
           <h2>
             {scores[1] === scores[2]
               ? 'Tie game!'
-              : `Player ${scores[1] > scores[2] ? 1 : 2} wins!`}
+              : `${names[scores[1] > scores[2] ? 1 : 2]} wins!`}
           </h2>
 
           <button onClick={restartGame}>Play Again</button>

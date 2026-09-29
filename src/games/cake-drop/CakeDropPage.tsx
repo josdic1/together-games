@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom'
 
 import { characters } from '../../content/characters'
 import { playTap, playCorrect, playWrong, playWin } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 
 import './CakeDropPage.css'
 
@@ -234,6 +235,17 @@ export default function CakeDropPage() {
     winner,
     setWinner,
   ] = useState<1 | 2 | null>(null)
+
+  const { setStatus } = useGamePlayers()
+
+  useEffect(() => {
+    setStatus({
+      competitive: true,
+      currentPlayer: winner ? null : player,
+      scores,
+      label: winner ? 'WINNER' : 'DROP THE CAKE',
+    })
+  }, [player, scores, setStatus, winner])
 
   const [
     speedLevel,

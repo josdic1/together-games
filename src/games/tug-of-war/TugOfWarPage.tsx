@@ -1,9 +1,11 @@
 import {
+  useEffect,
   useState,
 } from 'react'
 import { Link } from 'react-router-dom'
 import { characters } from '../../content/characters'
 import { playTap, playWin } from '../../shared/sound'
+import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './TugOfWarPage.css'
 
 type Phase =
@@ -35,6 +37,17 @@ export default function TugOfWarPage() {
 
   const [winner, setWinner] =
     useState<1 | 2 | null>(null)
+
+  const { setStatus } = useGamePlayers()
+
+  useEffect(() => {
+    setStatus({
+      competitive: true,
+      currentPlayer: null,
+      scores: { 1: Math.round(100 - position), 2: Math.round(position) },
+      label: winner ? 'WINNER' : 'TAP YOUR SIDE',
+    })
+  }, [position, setStatus, winner])
 
   function pull(player: 1 | 2) {
     if (phase !== 'playing') {
