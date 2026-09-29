@@ -79,7 +79,12 @@ function IngredientArt({ ingredient }: { ingredient: Ingredient }) {
 }
 
 function RecipePreview({ recipe }: { recipe: Recipe }) {
-  return <span className="recipe-preview">{recipe.ingredients.slice(0, 4).map((item, index) => <IngredientArt key={`${item.id}-${index}`} ingredient={item} />)}</span>
+  const slug = recipe.name.toLowerCase().replaceAll(' ', '-').replaceAll('cream-', 'cream-')
+  return (
+    <span className={`recipe-preview recipe-food recipe-food--${slug}`} aria-hidden="true">
+      <i /><b /><em /><span className="recipe-food__detail" />
+    </span>
+  )
 }
 
 export default function RichieBakeryPage() {

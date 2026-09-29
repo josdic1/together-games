@@ -4,21 +4,23 @@ import { playTap, playWrong } from '../../shared/sound'
 import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './FreezeDancePage.css'
 
-type Difficulty = 'easy' | 'mid' | 'hard'
-type WheelCount = 6 | 12 | 24 | 48
+type Difficulty = 1 | 2 | 3 | 4 | 5
+type WheelCount = 6 | 9 | 12 | 24 | 48
 type Wheel = { id: number; remaining: number }
 
-const LIFE: Record<Difficulty, number> = { easy: 7200, mid: 4800, hard: 3200 }
-const COUNTS: WheelCount[] = [6, 12, 24, 48]
+const LIFE: Record<Difficulty, number> = { 1: 9200, 2: 7600, 3: 5900, 4: 4400, 5: 3100 }
+const COUNTS: WheelCount[] = [6, 9, 12, 24, 48]
+const LEVELS: Difficulty[] = [1, 2, 3, 4, 5]
+const LEVEL_LABEL: Record<Difficulty, string> = { 1: 'Very easy', 2: 'Easy', 3: 'Medium', 4: 'Harder', 5: 'Hard' }
 
 function freshWheels(count: WheelCount, life: number): Wheel[] {
   return Array.from({ length: count }, (_, id) => ({ id, remaining: life }))
 }
 
 export default function FreezeDancePage() {
-  const [difficulty, setDifficulty] = useState<Difficulty>('mid')
+  const [difficulty, setDifficulty] = useState<Difficulty>(3)
   const [wheelCount, setWheelCount] = useState<WheelCount>(12)
-  const [wheels, setWheels] = useState<Wheel[]>(() => freshWheels(12, LIFE.mid))
+  const [wheels, setWheels] = useState<Wheel[]>(() => freshWheels(12, LIFE[3]))
   const [running, setRunning] = useState(false)
   const [gameOver, setGameOver] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -114,7 +116,7 @@ export default function FreezeDancePage() {
         </div>
 
         <div className="wheels-controls">
-          <div><span>Mode</span>{(['easy', 'mid', 'hard'] as Difficulty[]).map((level) => <button type="button" disabled={running} className={difficulty === level ? 'is-active' : ''} key={level} onClick={() => changeDifficulty(level)}>{level}</button>)}</div>
+          <div><span>Level</span>{LEVELS.map((level) => <button type="button" disabled={running} className={difficulty === level ? 'is-active' : ''} key={level} onClick={() => changeDifficulty(level)} aria-label={`Level ${level}, ${LEVEL_LABEL[level]}`}><strong>{level}</strong>{(level === 1 || level === 5) && <small>{LEVEL_LABEL[level]}</small>}</button>)}</div>
           <div><span>Wheels</span>{COUNTS.map((count) => <button type="button" disabled={running} className={wheelCount === count ? 'is-active' : ''} key={count} onClick={() => changeCount(count)}>{count}</button>)}</div>
         </div>
 
