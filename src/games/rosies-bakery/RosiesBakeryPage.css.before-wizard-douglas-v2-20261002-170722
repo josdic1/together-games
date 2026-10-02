@@ -1,0 +1,686 @@
+.wizard-bakery {
+  width: min(100%, 1180px);
+  height: 100svh;
+
+  margin: 0 auto;
+  padding: 10px 16px 72px;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  gap: 10px;
+  overflow: hidden;
+
+  background: #fffaf0;
+  color: #171717;
+}
+
+.wizard-bakery__topbar {
+  display: grid;
+  grid-template-columns:
+    96px
+    minmax(0, 1fr)
+    96px;
+
+  align-items: center;
+  gap: 10px;
+}
+
+.wizard-bakery__topbar h1 {
+  margin: 0;
+
+  text-align: center;
+
+  font-size:
+    clamp(
+      1.8rem,
+      4.9vh,
+      3.6rem
+    );
+
+  line-height: .9;
+}
+
+.wizard-bakery__nav,
+.wizard-next,
+.wizard-difficulty button,
+.wizard-pantry__button {
+  border:
+    3px solid #171717;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  font: inherit;
+}
+
+.wizard-bakery__nav {
+  min-height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 13px;
+
+  background: #fffdf8;
+  color: #171717;
+
+  text-decoration: none;
+}
+
+.wizard-bakery__board {
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns:
+    220px
+    minmax(0, 1fr);
+
+  grid-template-rows:
+    auto
+    auto
+    minmax(0, 1fr);
+
+  grid-template-areas:
+    "douglas order"
+    "douglas tray"
+    "pantry pantry";
+
+  gap: 11px;
+
+  padding: 12px;
+
+  overflow: hidden;
+
+  border:
+    4px solid #171717;
+
+  border-radius: 24px;
+
+  background:
+    radial-gradient(
+      circle at 13% 13%,
+      rgb(255 157 200 / .25),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 86% 8%,
+      rgb(255 227 59 / .27),
+      transparent 20%
+    ),
+    #fff4dc;
+}
+
+.wizard-douglas {
+  grid-area: douglas;
+
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    minmax(0, 1fr)
+    auto;
+
+  overflow: hidden;
+
+  border:
+    4px solid #171717;
+
+  border-radius: 22px;
+
+  background: #ff94bf;
+
+  box-shadow:
+    5px 6px 0 #171717;
+}
+
+.wizard-douglas > img {
+  width: 100%;
+  height: 100%;
+
+  min-height: 0;
+
+  display: block;
+
+  object-fit: cover;
+  object-position:
+    42% 40%;
+}
+
+.wizard-douglas__bubble {
+  display: grid;
+  gap: 2px;
+
+  padding:
+    10px 12px 12px;
+
+  border-top:
+    4px solid #171717;
+
+  background: #fffdf8;
+}
+
+.wizard-douglas__bubble small,
+.wizard-order small,
+.wizard-tray small {
+  font-size: .56rem;
+  letter-spacing: .09em;
+}
+
+.wizard-douglas__bubble strong {
+  font-size: 1.2rem;
+}
+
+.wizard-douglas__bubble span {
+  font-size: .72rem;
+}
+
+.wizard-order {
+  grid-area: order;
+
+  display: grid;
+  gap: 8px;
+
+  padding: 11px 12px;
+
+  border:
+    4px solid #171717;
+
+  border-radius: 20px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    4px 5px 0 #171717;
+}
+
+.wizard-order__header {
+  display: flex;
+  justify-content:
+    space-between;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.wizard-order__header > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.wizard-order__header strong {
+  font-size: 1.15rem;
+}
+
+.wizard-difficulty {
+  display: flex;
+  gap: 5px;
+}
+
+.wizard-difficulty button {
+  height: 32px;
+
+  padding:
+    0 10px;
+
+  border-radius:
+    999px;
+
+  background:
+    #fffdf8;
+
+  color: #171717;
+
+  font-size: .58rem;
+}
+
+.wizard-difficulty button.is-active {
+  background: #ffe33b;
+}
+
+.wizard-order__strip {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(0, 1fr)
+    );
+
+  gap: 7px;
+}
+
+.wizard-order__item {
+  position: relative;
+
+  min-height: 94px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border:
+    3px solid #171717;
+
+  border-radius: 14px;
+
+  background: #fff3c8;
+}
+
+.wizard-order__item > span {
+  position: absolute;
+
+  top: 4px;
+  left: 5px;
+
+  z-index: 2;
+
+  width: 20px;
+  height: 20px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    2px solid #171717;
+
+  border-radius: 50%;
+
+  background: #ffe33b;
+
+  font-size: .54rem;
+}
+
+.wizard-tray {
+  grid-area: tray;
+
+  display: grid;
+  grid-template-columns:
+    120px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+
+  border:
+    4px solid #171717;
+
+  border-radius: 20px;
+
+  background: #dff7ff;
+
+  box-shadow:
+    4px 5px 0 #171717;
+}
+
+.wizard-tray__title {
+  display: grid;
+  gap: 2px;
+}
+
+.wizard-tray__title strong {
+  font-size: .8rem;
+}
+
+.wizard-tray__slots {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(0, 1fr)
+    );
+
+  gap: 7px;
+}
+
+.wizard-tray__slot {
+  min-height: 76px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border:
+    3px dashed #171717;
+
+  border-radius: 13px;
+
+  background:
+    rgb(255 255 255 / .6);
+}
+
+.wizard-tray__slot > span {
+  opacity: .42;
+
+  font-size: 1.4rem;
+}
+
+.wizard-tray__slot.is-filled {
+  border-style: solid;
+
+  background: #fff;
+}
+
+.wizard-next {
+  min-width: 130px;
+  min-height: 46px;
+
+  border-radius: 14px;
+
+  background: #72d64d;
+
+  color: #171717;
+}
+
+.wizard-pantry {
+  grid-area: pantry;
+
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns:
+    repeat(
+      6,
+      minmax(0, 1fr)
+    );
+
+  gap: 10px;
+}
+
+.wizard-pantry__button {
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  border-radius: 17px;
+
+  background: #fffdf8;
+
+  color: #171717;
+}
+
+.wizard-pantry__button.is-wrong {
+  background: #ffbec9;
+
+  animation:
+    wizard-shake
+    .17s
+    2;
+}
+
+.wizard-pantry__button:disabled {
+  opacity: .7;
+}
+
+@keyframes wizard-shake {
+  50% {
+    transform:
+      translateX(7px);
+  }
+}
+
+.wizard-food {
+  width: 100%;
+  height: 100%;
+
+  min-height: 100px;
+
+  display: grid;
+  grid-template-rows:
+    minmax(0, 1fr)
+    auto;
+
+  background: #fffdf8;
+}
+
+.wizard-food img {
+  width: 100%;
+  height: 100%;
+
+  min-height: 0;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.wizard-food strong {
+  padding: 4px 5px 6px;
+
+  font-size: .58rem;
+  line-height: 1;
+
+  text-align: center;
+}
+
+.wizard-food--compact {
+  min-height: 0;
+  height: 100%;
+}
+
+.wizard-food--compact strong {
+  display: none;
+}
+
+.wizard-food--compact img {
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .wizard-bakery {
+    padding:
+      8px 8px 66px;
+
+    gap: 7px;
+  }
+
+  .wizard-bakery__topbar {
+    grid-template-columns:
+      72px
+      1fr
+      72px;
+  }
+
+  .wizard-bakery__topbar h1 {
+    font-size: 1.3rem;
+  }
+
+  .wizard-bakery__nav {
+    min-height: 36px;
+
+    font-size: .64rem;
+  }
+
+  .wizard-bakery__board {
+    grid-template-columns: 1fr;
+
+    grid-template-rows:
+      auto
+      auto
+      auto
+      minmax(0, 1fr);
+
+    grid-template-areas:
+      "douglas"
+      "order"
+      "tray"
+      "pantry";
+
+    gap: 8px;
+
+    padding: 8px;
+  }
+
+  .wizard-douglas {
+    grid-template-columns:
+      82px
+      minmax(0, 1fr);
+
+    grid-template-rows: 78px;
+
+    min-height: 78px;
+  }
+
+  .wizard-douglas > img {
+    height: 78px;
+
+    object-position:
+      39% 40%;
+  }
+
+  .wizard-douglas__bubble {
+    border-top: 0;
+
+    border-left:
+      4px solid #171717;
+
+    padding: 7px 9px;
+  }
+
+  .wizard-douglas__bubble strong {
+    font-size: .9rem;
+  }
+
+  .wizard-douglas__bubble span {
+    font-size: .59rem;
+  }
+
+  .wizard-order {
+    padding: 8px;
+  }
+
+  .wizard-order__header strong {
+    font-size: .88rem;
+  }
+
+  .wizard-difficulty button {
+    height: 28px;
+
+    padding:
+      0 7px;
+
+    font-size: .5rem;
+  }
+
+  .wizard-order__item {
+    min-height: 62px;
+  }
+
+  .wizard-tray {
+    grid-template-columns: 1fr;
+
+    gap: 6px;
+
+    padding: 8px;
+  }
+
+  .wizard-tray__title {
+    display: flex;
+    align-items: baseline;
+    justify-content:
+      space-between;
+  }
+
+  .wizard-tray__slot {
+    min-height: 54px;
+  }
+
+  .wizard-next {
+    min-height: 38px;
+  }
+
+  .wizard-pantry {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+
+    gap: 7px;
+  }
+
+  .wizard-food {
+    min-height: 76px;
+  }
+
+  .wizard-food strong {
+    font-size: .5rem;
+  }
+}
+
+@media (
+  max-height: 560px
+) and (
+  orientation: landscape
+) {
+  .wizard-bakery {
+    padding:
+      5px 10px 66px;
+
+    gap: 5px;
+  }
+
+  .wizard-bakery__topbar h1 {
+    font-size: 1.18rem;
+  }
+
+  .wizard-bakery__board {
+    grid-template-columns:
+      170px
+      minmax(0, 1fr);
+
+    grid-template-rows:
+      auto
+      auto
+      minmax(0, 1fr);
+
+    grid-template-areas:
+      "douglas order"
+      "douglas tray"
+      "pantry pantry";
+
+    gap: 7px;
+
+    padding: 8px;
+  }
+
+  .wizard-douglas__bubble {
+    padding: 7px;
+  }
+
+  .wizard-douglas__bubble strong {
+    font-size: .9rem;
+  }
+
+  .wizard-order,
+  .wizard-tray {
+    padding: 7px;
+  }
+
+  .wizard-order__item {
+    min-height: 58px;
+  }
+
+  .wizard-tray__slot {
+    min-height: 48px;
+  }
+
+  .wizard-pantry {
+    gap: 7px;
+  }
+
+  .wizard-food {
+    min-height: 72px;
+  }
+}

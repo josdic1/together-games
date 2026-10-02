@@ -5,20 +5,17 @@ import { playTap, playCorrect, playWrong } from '../../shared/sound'
 import { useGamePlayers } from '../../shared/GamePlayersContext'
 import './CopyMePage.css'
 
-type Phase = 'create' | 'copy' | 'result'
+type Phase = 'create' | 'handoff' | 'copy' | 'result'
 
-function getCharacter(id: string): Character {
-  const character = characters.find((item) => item.id === id)
-  if (!character) throw new Error(`Character not found: ${id}`)
-  return character
+const CHARACTERS_PER_ROUND = 4
+
+function charactersForRound(roundNumber: number): Character[] {
+  const start = (roundNumber * CHARACTERS_PER_ROUND) % characters.length
+  return Array.from(
+    { length: CHARACTERS_PER_ROUND },
+    (_, index) => characters[(start + index) % characters.length],
+  )
 }
-
-const copyCharacters: Character[] = [
-  getCharacter('coco'),
-  getCharacter('roy'),
-  getCharacter('rosie'),
-  getCharacter('dr-wierce'),
-]
 
 export default function CopyMePage() {
   const [maker, setMaker] = useState<1 | 2>(1)
@@ -31,9 +28,10 @@ export default function CopyMePage() {
   const [hintUsedThisRound, setHintUsedThisRound] = useState(false)
   const [hintCharacterId, setHintCharacterId] = useState<string | null>(null)
   const [lastPoints, setLastPoints] = useState<1 | 2 | null>(null)
+  const [roundNumber, setRoundNumber] = useState(0)
   const hintTimerRef = useRef<number | null>(null)
-  const phaseTimerRef = useRef<number | null>(null)
   const copier = maker === 1 ? 2 : 1
+  const copyCharacters = charactersForRound(roundNumber)
   const { names, setStatus } = useGamePlayers()
 
   useEffect(() => {
@@ -41,13 +39,19 @@ export default function CopyMePage() {
       competitive: true,
       currentPlayer: phase === 'create' ? maker : phase === 'copy' ? copier : null,
       scores,
-      label: phase === 'create' ? `MAKE ${targetLength}` : phase === 'copy' ? `COPY ${targetLength}` : 'ROUND OVER',
+      label:
+        phase === 'create'
+          ? `MAKE ${targetLength}`
+          : phase === 'handoff'
+            ? `PASS TO ${names[copier].toUpperCase()}`
+            : phase === 'copy'
+              ? `COPY ${targetLength}`
+              : 'ROUND OVER',
     })
-  }, [copier, maker, phase, scores, setStatus, targetLength])
+  }, [copier, maker, names, phase, scores, setStatus, targetLength])
 
   useEffect(() => () => {
     if (hintTimerRef.current !== null) window.clearTimeout(hintTimerRef.current)
-    if (phaseTimerRef.current !== null) window.clearTimeout(phaseTimerRef.current)
   }, [])
 
   function clearHintReveal() {
@@ -56,15 +60,12 @@ export default function CopyMePage() {
     setHintCharacterId(null)
   }
 
-  function beginCopyAfterPreview() {
-    if (phaseTimerRef.current !== null) window.clearTimeout(phaseTimerRef.current)
-    phaseTimerRef.current = window.setTimeout(() => {
-      setAttempt([])
-      setLastPoints(null)
-      setHintUsedThisRound(false)
-      setPhase('copy')
-      phaseTimerRef.current = null
-    }, 650)
+  function beginCopy() {
+    playTap()
+    setAttempt([])
+    setLastPoints(null)
+    setHintUsedThisRound(false)
+    setPhase('copy')
   }
 
   function handleCharacterClick(characterId: string) {
@@ -73,7 +74,7 @@ export default function CopyMePage() {
       playTap()
       const nextPattern = [...pattern, characterId]
       setPattern(nextPattern)
-      if (nextPattern.length === targetLength) beginCopyAfterPreview()
+      if (nextPattern.length === targetLength) setPhase('handoff')
       return
     }
 
@@ -135,13 +136,12 @@ export default function CopyMePage() {
     setWasCorrect(false)
     setHintUsedThisRound(false)
     setLastPoints(null)
+    setRoundNumber((current) => current + 1)
     setPhase('create')
   }
 
   function resetGame() {
     clearHintReveal()
-    if (phaseTimerRef.current !== null) window.clearTimeout(phaseTimerRef.current)
-    phaseTimerRef.current = null
     setMaker(1)
     setPattern([])
     setAttempt([])
@@ -149,6 +149,7 @@ export default function CopyMePage() {
     setScores({ 1: 0, 2: 0 })
     setHintUsedThisRound(false)
     setLastPoints(null)
+    setRoundNumber(0)
     setPhase('create')
   }
 
@@ -162,55 +163,133 @@ export default function CopyMePage() {
     return character ? <img src={character.image} alt="" draggable={false} /> : null
   }
 
-  function renderTicks(score: number) {
-    if (score === 0) return <span className="copy-me-score-empty">—</span>
-    return <span className="copy-me-score-ticks" aria-label={`${score} points`}>{Array.from({ length: score }, (_, index) => <span key={index} className="copy-me-score-tick" aria-hidden="true">✓</span>)}</span>
-  }
-
   const hintCharacter = copyCharacters.find((character) => character.id === hintCharacterId)
+  const shownSequence = phase === 'create' ? pattern : attempt
 
   return (
     <main className="copy-me-game">
       <header className="copy-me-topbar">
-        <Link to="/" className="copy-me-home">Games</Link>
+        <Link to="/" className="copy-me-home">← Games</Link>
         <h1>Copy Me</h1>
         <button className="copy-me-reset" onClick={resetGame}>Reset</button>
       </header>
 
-      <section className="copy-me-length" aria-label="Pattern length">
-        <span>Pattern</span>
-        {[4, 5, 6, 7, 8].map((length) => <button type="button" key={length} className={targetLength === length ? 'is-active' : ''} disabled={phase !== 'create' || pattern.length > 0} onClick={() => changeTarget(length)}>{length}</button>)}
+      <section className="copy-me-scoreboard" aria-label="Scoreboard">
+        <div className={`copy-me-score-player ${phase === 'create' && maker === 1 || phase === 'copy' && copier === 1 ? 'is-active' : ''}`}>
+          <span>{names[1]}</span>
+          <strong>{scores[1]}</strong>
+        </div>
+        <span className="copy-me-score-label">SCORE</span>
+        <div className={`copy-me-score-player ${phase === 'create' && maker === 2 || phase === 'copy' && copier === 2 ? 'is-active' : ''}`}>
+          <strong>{scores[2]}</strong>
+          <span>{names[2]}</span>
+        </div>
       </section>
 
-      <section className="copy-me-scores" aria-label="Score">
-        <div className={`copy-me-score copy-me-score--one ${copier === 1 && phase !== 'create' ? 'is-active' : ''}`}><strong>{names[1]}</strong>{renderTicks(scores[1])}</div>
-        <div className={`copy-me-score copy-me-score--two ${copier === 2 && phase !== 'create' ? 'is-active' : ''}`}><strong>{names[2]}</strong>{renderTicks(scores[2])}</div>
-      </section>
-
-      <p className="copy-me-status">
-        {phase === 'create' && `${names[maker]}: tap exactly ${targetLength}`}
-        {phase === 'copy' && `${names[copier]}: copy all ${targetLength}`}
-        {phase === 'result' && (wasCorrect ? `You got it! +${lastPoints}` : 'Not quite!')}
-      </p>
-
-      {(phase === 'create' || phase === 'copy') && (
-        <section className="copy-me-pattern" aria-label={phase === 'create' ? 'Pattern' : 'Your answer so far'}>
-          {(phase === 'create' ? pattern : attempt).length === 0 ? <span>{phase === 'create' ? `0 / ${targetLength}` : 'Tap your answer'}</span> : <>
-            {(phase === 'create' ? pattern : attempt).map((characterId, index) => <span className="copy-me-pattern-character" key={`${phase}-${characterId}-${index}`}>{renderCharacter(characterId)}</span>)}
-            {phase === 'copy' && <button type="button" className="copy-me-delete" onClick={removeLastAttempt} aria-label="Delete last pick">←</button>}
-          </>}
+      {phase === 'create' && pattern.length === 0 && (
+        <section className="copy-me-length" aria-label="Pattern length">
+          <span>Length</span>
+          {[4, 5, 6, 7, 8].map((length) => (
+            <button
+              type="button"
+              key={length}
+              className={targetLength === length ? 'is-active' : ''}
+              onClick={() => changeTarget(length)}
+            >
+              {length}
+            </button>
+          ))}
         </section>
       )}
 
-      {phase === 'copy' && hintCharacter && <div className="copy-me-hint" aria-label="Hint"><span>Next</span><img src={hintCharacter.image} alt="" draggable={false} /></div>}
+      {phase !== 'handoff' && (
+        <section className="copy-me-play-area">
+          <div className="copy-me-instruction" aria-live="polite">
+            {phase === 'create' && <><strong>{names[maker]}</strong>, make a pattern of {targetLength}</>}
+            {phase === 'copy' && <><strong>{names[copier]}</strong>, copy the pattern</>}
+            {phase === 'result' && wasCorrect && <><strong>Perfect!</strong> +{lastPoints} {lastPoints === 1 ? 'point' : 'points'}</>}
+            {phase === 'result' && !wasCorrect && <><strong>Not quite.</strong> Compare them below.</>}
+          </div>
 
-      {phase !== 'result' && <section className="copy-me-buttons">{copyCharacters.map((character) => <button key={character.id} className="copy-me-character" onClick={() => handleCharacterClick(character.id)} aria-label={character.name}><img src={character.image} alt="" draggable={false} /></button>)}</section>}
+          {(phase === 'create' || phase === 'copy') && (
+            <section className="copy-me-pattern" aria-label={phase === 'create' ? 'Pattern' : 'Your answer so far'}>
+              <span className="copy-me-progress">{shownSequence.length} / {targetLength}</span>
+              <div className="copy-me-pattern-row">
+                {shownSequence.map((characterId, index) => (
+                  <span className="copy-me-pattern-character" key={`${phase}-${characterId}-${index}`}>
+                    {renderCharacter(characterId)}
+                  </span>
+                ))}
+              </div>
+              {phase === 'copy' && attempt.length > 0 && (
+                <button type="button" className="copy-me-delete" onClick={removeLastAttempt} aria-label="Delete last pick">←</button>
+              )}
+            </section>
+          )}
 
-      {phase === 'result' && !wasCorrect && <section className="copy-me-comparison"><div><strong>Pattern</strong><div className="copy-me-comparison-row">{pattern.map((characterId, index) => <span key={`pattern-${characterId}-${index}`}>{renderCharacter(characterId)}</span>)}</div></div><div><strong>Your Try</strong><div className="copy-me-comparison-row">{attempt.map((characterId, index) => <span key={`attempt-${characterId}-${index}`}>{renderCharacter(characterId)}</span>)}</div></div></section>}
+          {phase === 'copy' && (
+            <p className="copy-me-points-note">No hint = 2 points <span>•</span> Hint = 1 point</p>
+          )}
 
-      {phase === 'copy' && <button className="copy-me-action copy-me-action--hint" onClick={useHint} disabled={hintUsedThisRound}>{hintUsedThisRound ? 'HINT USED' : 'ONE HINT'}</button>}
-      {phase === 'result' && !wasCorrect && <button className="copy-me-action" onClick={tryAgain}>TRY AGAIN</button>}
-      {phase === 'result' && wasCorrect && <button className="copy-me-action" onClick={nextRound}>SWITCH PLAYERS</button>}
+          {phase !== 'result' && (
+            <section className="copy-me-buttons" aria-label="Characters">
+              {copyCharacters.map((character) => (
+                <button
+                  key={character.id}
+                  className="copy-me-character"
+                  onClick={() => handleCharacterClick(character.id)}
+                  aria-label={character.name}
+                >
+                  <img src={character.image} alt="" draggable={false} />
+                </button>
+              ))}
+            </section>
+          )}
+
+          {phase === 'result' && !wasCorrect && (
+            <section className="copy-me-comparison">
+              <div>
+                <strong>Pattern</strong>
+                <div className="copy-me-comparison-row">
+                  {pattern.map((characterId, index) => <span key={`pattern-${characterId}-${index}`}>{renderCharacter(characterId)}</span>)}
+                </div>
+              </div>
+              <div>
+                <strong>Your Try</strong>
+                <div className="copy-me-comparison-row">
+                  {attempt.map((characterId, index) => <span key={`attempt-${characterId}-${index}`}>{renderCharacter(characterId)}</span>)}
+                </div>
+              </div>
+            </section>
+          )}
+        </section>
+      )}
+
+      {phase === 'handoff' && (
+        <section className="copy-me-handoff" aria-live="polite">
+          <span className="copy-me-handoff-kicker">PATTERN READY</span>
+          <strong>Pass to {names[copier]}</strong>
+          <p>The pattern is hidden. Tap ready when {names[copier]} has the screen.</p>
+          <button type="button" onClick={beginCopy}>I'M READY</button>
+        </section>
+      )}
+
+      {phase === 'copy' && hintCharacter && (
+        <div className="copy-me-hint" aria-label="Hint">
+          <span>Next</span>
+          <img src={hintCharacter.image} alt="" draggable={false} />
+        </div>
+      )}
+
+      <footer className="copy-me-actions">
+        {phase === 'copy' && (
+          <button className="copy-me-action copy-me-action--hint" onClick={useHint} disabled={hintUsedThisRound}>
+            {hintUsedThisRound ? 'HINT USED — 1 POINT' : 'HINT — 1 POINT'}
+          </button>
+        )}
+        {phase === 'result' && !wasCorrect && <button className="copy-me-action" onClick={tryAgain}>TRY AGAIN</button>}
+        {phase === 'result' && wasCorrect && <button className="copy-me-action" onClick={nextRound}>NEXT ROUND</button>}
+      </footer>
     </main>
   )
 }

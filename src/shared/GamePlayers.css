@@ -33,3 +33,13 @@
 @keyframes player-turn-pulse{0%,100%{transform:translateY(-2px) scale(1.03)}50%{transform:translateY(-3px) scale(1.045)}}
 @media(max-width:560px){.player-dock{min-height:48px;width:calc(100vw - 12px);bottom:4px}.player-dock__leader{display:none}.player-dock__editor{grid-template-columns:1fr 1fr}.player-dock__editor>button{grid-column:1/-1}}
 #root:has(.player-dock)>main{padding-bottom:max(72px,calc(env(safe-area-inset-bottom) + 64px))!important}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-dock *,
+  .player-dock *::before,
+  .player-dock *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

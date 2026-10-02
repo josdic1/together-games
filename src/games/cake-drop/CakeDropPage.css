@@ -1807,3 +1807,562 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* =========================================
+   CAKE DROP PRODUCT PASS 2026-10-02
+   ========================================= */
+.cake-drop-reset{justify-self:end;min-height:44px;padding:7px 12px;border:3px solid #171717;border-radius:14px 12px 15px 13px;background:#fffdf8;color:#171717;box-shadow:3px 4px 0 #171717;font:inherit;font-weight:700}
+.cake-drop-stage{cursor:default}
+.cake-drop-playfield{position:absolute;z-index:3;inset:106px 0 0;cursor:pointer;touch-action:manipulation;outline:none}
+.cake-drop-scoreboard{position:absolute;z-index:30;top:12px;left:12px;right:12px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;pointer-events:none}
+.cake-drop-scoreboard__player{min-width:0;height:72px;display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 9px;border:3px solid #171717;border-radius:17px 14px 18px 15px;background:#fffdf8;box-shadow:2px 3px 0 #171717;opacity:.62}
+.cake-drop-scoreboard__player--two{grid-template-columns:auto minmax(0,1fr) 50px;text-align:right}
+.cake-drop-scoreboard__player.is-active{opacity:1;transform:translateY(-2px);box-shadow:4px 5px 0 #171717}
+.cake-drop-scoreboard__player--one.is-active{background:#dff7ff}.cake-drop-scoreboard__player--two.is-active{background:#ffe4f0}
+.cake-drop-scoreboard__player img{width:48px;height:48px;object-fit:contain;display:block}.cake-drop-scoreboard__player span{min-width:0;display:grid;gap:1px}.cake-drop-scoreboard__player strong,.cake-drop-scoreboard__player small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cake-drop-scoreboard__player strong{font-size:.95rem;line-height:1}.cake-drop-scoreboard__player small{font-size:.62rem;opacity:.66}.cake-drop-scoreboard__player b{display:flex;align-items:baseline;gap:1px;font-size:1.55rem;line-height:1}.cake-drop-scoreboard__player em{font-style:normal;font-size:.65rem;opacity:.62}
+.cake-drop-scoreboard__center{display:grid;justify-items:center;gap:2px;min-width:180px;padding:8px 12px;border:3px solid #171717;border-radius:999px;background:var(--turn-main);box-shadow:3px 4px 0 #171717;text-align:center}.cake-drop-scoreboard__center strong{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem}.cake-drop-scoreboard__center span{font-size:.58rem;letter-spacing:.03em}
+.cake-drop-player-rail,.cake-drop-speed,.cake-drop-turn-pill,.cake-drop-instruction{display:none!important}.cake-drop-guide{top:112px!important}.cake-drop-belt{top:78px!important}
+.cake-drop-select-speed{display:grid;justify-items:center;gap:7px}.cake-drop-select-speed>span{font-size:.68rem;letter-spacing:.08em}.cake-drop-select-speed>div{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}.cake-drop-select-speed button{min-width:84px;min-height:38px;padding:6px 12px;border:3px solid #171717;border-radius:999px;background:#fffdf8;box-shadow:2px 3px 0 #171717;color:#171717;font:inherit;font-size:.72rem;font-weight:800}.cake-drop-select-speed button.is-active{background:#ffe33b;transform:translateY(-2px);box-shadow:3px 4px 0 #171717}
+@media(max-width:720px){.cake-drop-game{padding:10px 10px 12px;gap:9px}.cake-drop-topbar{grid-template-columns:78px 1fr 70px;gap:7px}.cake-drop-topbar h1{font-size:clamp(1.55rem,7vw,2.25rem)}.cake-drop-home,.cake-drop-reset{min-height:38px;padding:5px 8px;border-width:2px;box-shadow:2px 3px 0 #171717;font-size:.72rem}.cake-drop-scoreboard{top:7px;left:7px;right:7px;grid-template-columns:1fr 1fr;gap:6px}.cake-drop-scoreboard__center{grid-column:1/-1;grid-row:2;justify-self:center;min-width:0;padding:5px 10px;box-shadow:2px 3px 0 #171717}.cake-drop-scoreboard__player{height:56px;grid-template-columns:36px minmax(0,1fr) auto;gap:5px;padding:5px 6px;border-width:2px}.cake-drop-scoreboard__player--two{grid-template-columns:auto minmax(0,1fr) 36px}.cake-drop-scoreboard__player img{width:34px;height:34px}.cake-drop-scoreboard__player strong{font-size:.72rem}.cake-drop-scoreboard__player small{display:none}.cake-drop-scoreboard__player b{font-size:1.15rem}.cake-drop-scoreboard__center strong{font-size:.68rem}.cake-drop-scoreboard__center span{font-size:.52rem}.cake-drop-playfield{inset:102px 0 0}.cake-drop-guide{top:105px!important}.cake-drop-belt{top:83px!important}.cake-drop-piece{width:38%}.cake-drop-plate{width:52%}}
+@media(max-height:520px) and (orientation:landscape){.cake-drop-game{padding:6px 10px 8px;gap:5px}.cake-drop-topbar h1{font-size:1.55rem}.cake-drop-home,.cake-drop-reset{min-height:32px;padding-block:3px}.cake-drop-scoreboard{top:5px}.cake-drop-scoreboard__player{height:48px}.cake-drop-scoreboard__center{min-width:150px;padding-block:5px}.cake-drop-playfield{inset:64px 0 0}.cake-drop-guide{top:66px!important}.cake-drop-belt{top:48px!important}}
+
+/* =========================================
+   CAKE DROP PICKER FIX 2026-10-02
+   One shared character roster.
+   Compact selected-player cards.
+   ========================================= */
+
+.cake-drop-select {
+  grid-template-rows:
+    auto
+    minmax(0, 1fr)
+    auto
+    auto;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  background: #fffaf0;
+}
+
+.cake-drop-select-copy p {
+  margin-bottom: 5px;
+}
+
+.cake-drop-select-copy h2 {
+  font-size:
+    clamp(
+      1.55rem,
+      3.5vh,
+      2.5rem
+    );
+}
+
+.cake-drop-picker {
+  min-height: 0;
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+  gap: 10px;
+}
+
+.cake-drop-picker-players {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.cake-drop-picker-player {
+  min-width: 0;
+  height: 78px;
+  display: grid;
+  grid-template-columns:
+    58px
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 3px solid #171717;
+  border-radius: 18px;
+  background: #fffdf8;
+  color: #171717;
+  box-shadow: 3px 4px 0 #171717;
+  text-align: left;
+}
+
+.cake-drop-picker-player.is-active {
+  transform: translateY(-2px);
+}
+
+.cake-drop-picker-player--one.is-active {
+  background: #dff7ff;
+}
+
+.cake-drop-picker-player--two.is-active {
+  background: #ffe4f0;
+}
+
+.cake-drop-picker-player img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+}
+
+.cake-drop-picker-player span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.cake-drop-picker-player small,
+.cake-drop-picker-player strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cake-drop-picker-player small {
+  font-size: .64rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.cake-drop-picker-player strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.cake-drop-picker-player em {
+  font-style: normal;
+  font-size: .6rem;
+  opacity: .58;
+}
+
+.cake-drop-picker-vs {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #171717;
+  border-radius: 50%;
+  background: #ffe33b;
+  box-shadow: 2px 3px 0 #171717;
+  font-size: .72rem;
+}
+
+.cake-drop-picker-roster {
+  min-height: 0;
+  display: grid;
+  grid-template-columns:
+    repeat(
+      7,
+      minmax(0, 1fr)
+    );
+  gap: 7px;
+  padding: 9px;
+  border: 3px solid #171717;
+  border-radius: 18px;
+  background: #fffdf8;
+  overflow: auto;
+}
+
+.cake-drop-picker-choice {
+  min-width: 0;
+  min-height: 80px;
+  display: grid;
+  grid-template-rows:
+    minmax(0, 1fr)
+    auto;
+  gap: 2px;
+  padding: 4px;
+  border: 3px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: #171717;
+}
+
+.cake-drop-picker-choice img {
+  width: 100%;
+  height: 52px;
+  object-fit: contain;
+  display: block;
+}
+
+.cake-drop-picker-choice span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .54rem;
+  line-height: 1;
+}
+
+.cake-drop-picker-choice.is-selected {
+  border-color: #171717;
+  background: #ffe33b;
+  box-shadow: 2px 3px 0 #171717;
+}
+
+@media (max-width: 720px) {
+  .cake-drop-select {
+    padding: 10px;
+    gap: 9px;
+  }
+
+  .cake-drop-select-copy h2 {
+    font-size: 1.4rem;
+  }
+
+  .cake-drop-picker-player {
+    height: 62px;
+    grid-template-columns:
+      42px
+      minmax(0, 1fr);
+    gap: 6px;
+    padding: 5px 7px;
+  }
+
+  .cake-drop-picker-player img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cake-drop-picker-player em {
+    display: none;
+  }
+
+  .cake-drop-picker-player strong {
+    font-size: .76rem;
+  }
+
+  .cake-drop-picker-vs {
+    width: 34px;
+    height: 34px;
+    font-size: .6rem;
+  }
+
+  .cake-drop-picker-roster {
+    grid-template-columns:
+      repeat(
+        5,
+        minmax(0, 1fr)
+      );
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .cake-drop-picker-choice {
+    min-height: 64px;
+    padding: 2px;
+  }
+
+  .cake-drop-picker-choice img {
+    height: 42px;
+  }
+
+  .cake-drop-picker-choice span {
+    font-size: .47rem;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .cake-drop-select-copy p {
+    display: none;
+  }
+
+  .cake-drop-select-copy h2 {
+    font-size: 1.2rem;
+  }
+
+  .cake-drop-picker-player {
+    height: 52px;
+  }
+
+  .cake-drop-picker-player img {
+    width: 35px;
+    height: 35px;
+  }
+
+  .cake-drop-picker-roster {
+    grid-template-columns:
+      repeat(
+        7,
+        minmax(0, 1fr)
+      );
+  }
+
+  .cake-drop-picker-choice {
+    min-height: 52px;
+  }
+
+  .cake-drop-picker-choice img {
+    height: 32px;
+  }
+
+  .cake-drop-select-play {
+    min-height: 44px;
+    font-size: 1rem;
+  }
+}
+
+/* CAKE DROP — FINAL CHARACTER PICKER OVERRIDE */
+
+.cake-drop-picker-roster {
+  display: flex !important;
+  grid-template-columns: none !important;
+
+  width: 100%;
+  min-height: 170px;
+  max-height: 190px;
+
+  gap: 12px;
+  padding: 12px;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  border: 3px solid #171717;
+  border-radius: 18px;
+  background: #fffdf8;
+
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cake-drop-picker-choice {
+  flex: 0 0 150px !important;
+
+  width: 150px !important;
+  min-width: 150px !important;
+  height: 148px !important;
+  min-height: 148px !important;
+
+  display: grid !important;
+  grid-template-rows: 112px auto !important;
+
+  gap: 5px;
+  padding: 6px;
+
+  overflow: visible !important;
+
+  border: 3px solid transparent;
+  border-radius: 16px;
+
+  background: transparent;
+  color: #171717;
+
+  scroll-snap-align: start;
+}
+
+.cake-drop-picker-choice img {
+  display: block !important;
+
+  width: 100% !important;
+  height: 112px !important;
+
+  object-fit: contain !important;
+  object-position: center !important;
+
+  overflow: visible !important;
+}
+
+.cake-drop-picker-choice span {
+  display: block;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: .68rem !important;
+  text-align: center;
+}
+
+.cake-drop-picker-choice.is-selected {
+  border-color: #171717 !important;
+  background: #ffe33b !important;
+  box-shadow: 2px 3px 0 #171717;
+}
+
+.cake-drop-picker-player img {
+  object-fit: contain !important;
+}
+
+@media (max-width: 720px) {
+  .cake-drop-picker-roster {
+    min-height: 145px;
+    max-height: 160px;
+
+    gap: 9px;
+    padding: 9px;
+  }
+
+  .cake-drop-picker-choice {
+    flex-basis: 122px !important;
+
+    width: 122px !important;
+    min-width: 122px !important;
+
+    height: 126px !important;
+    min-height: 126px !important;
+
+    grid-template-rows: 92px auto !important;
+  }
+
+  .cake-drop-picker-choice img {
+    height: 92px !important;
+  }
+}
+
+/* =========================================================
+   CAKE DROP FINAL PICKER — NO SCROLL / CONSISTENT CHARACTERS
+   2026-10-02
+   ========================================================= */
+
+.cake-drop-picker-roster {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(118px, 1fr) !important;
+
+  width: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  gap: 8px !important;
+  padding: 10px !important;
+
+  overflow: hidden !important;
+
+  border: 3px solid #171717 !important;
+  border-radius: 18px !important;
+  background: #fffdf8 !important;
+
+  scroll-snap-type: none !important;
+}
+
+.cake-drop-picker-roster::-webkit-scrollbar {
+  display: none !important;
+}
+
+.cake-drop-picker-choice {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 118px !important;
+  min-height: 118px !important;
+
+  flex: none !important;
+
+  display: grid !important;
+  grid-template-rows: 88px auto !important;
+
+  gap: 4px !important;
+  padding: 5px !important;
+
+  overflow: visible !important;
+
+  border: 3px solid transparent !important;
+  border-radius: 14px !important;
+
+  background: transparent !important;
+  color: #171717 !important;
+
+  scroll-snap-align: none !important;
+}
+
+.cake-drop-picker-choice img {
+  display: block !important;
+
+  width: 100% !important;
+  height: 88px !important;
+
+  object-fit: contain !important;
+  object-position: center !important;
+
+  overflow: visible !important;
+}
+
+.cake-drop-picker-choice span {
+  display: block !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+
+  font-size: .58rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.cake-drop-picker-choice.is-selected {
+  border-color: #171717 !important;
+  background: #ffe33b !important;
+  box-shadow: 2px 3px 0 #171717 !important;
+}
+
+.cake-drop-picker-player img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* Portrait: all 21 remain visible, no horizontal or vertical scrolling. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .cake-drop-picker-roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows: 76px !important;
+
+    gap: 4px !important;
+    padding: 6px !important;
+  }
+
+  .cake-drop-picker-choice {
+    height: 76px !important;
+    min-height: 76px !important;
+
+    grid-template-rows: 56px auto !important;
+
+    gap: 2px !important;
+    padding: 2px !important;
+
+    border-radius: 10px !important;
+  }
+
+  .cake-drop-picker-choice img {
+    height: 56px !important;
+  }
+
+  .cake-drop-picker-choice span {
+    font-size: .43rem !important;
+  }
+}
+
+/* Short landscape phones: 7 × 3 still fits cleanly. */
+@media (max-height: 560px) and (orientation: landscape) {
+  .cake-drop-picker-roster {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    grid-auto-rows: 78px !important;
+
+    gap: 4px !important;
+    padding: 6px !important;
+  }
+
+  .cake-drop-picker-choice {
+    height: 78px !important;
+    min-height: 78px !important;
+
+    grid-template-rows: 58px auto !important;
+
+    gap: 2px !important;
+    padding: 2px !important;
+  }
+
+  .cake-drop-picker-choice img {
+    height: 58px !important;
+  }
+
+  .cake-drop-picker-choice span {
+    font-size: .43rem !important;
+  }
+}

@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { playTap, playCorrect, playWrong } from '../../shared/sound'
 
 import './ParkerPage.css'
+import { readStorage, writeStorage } from '../../shared/storage'
 
 type Phase =
   | 'moving'
@@ -89,7 +90,7 @@ const BEST_KEY =
 
 function getSavedBest() {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       BEST_KEY,
     ),
   )
@@ -102,7 +103,7 @@ function getSavedBest() {
 
 function getSavedSpeed() {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       SPEED_KEY,
     ),
   )
@@ -120,7 +121,7 @@ function getSavedSpeed() {
 
 function getSavedDoor(): DoorMode {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       DOOR_KEY,
     ),
   )
@@ -278,7 +279,7 @@ export default function ParkerPage() {
   ) {
     setSpeedLevel(level)
 
-    window.localStorage.setItem(
+    writeStorage(
       SPEED_KEY,
       String(level),
     )
@@ -294,7 +295,7 @@ export default function ParkerPage() {
       setDoorOpen(1)
     }
 
-    window.localStorage.setItem(
+    writeStorage(
       DOOR_KEY,
       String(mode),
     )
@@ -563,7 +564,7 @@ export default function ParkerPage() {
                 nextBest >
                 current
               ) {
-                window.localStorage.setItem(
+                writeStorage(
                   BEST_KEY,
                   String(nextBest),
                 )

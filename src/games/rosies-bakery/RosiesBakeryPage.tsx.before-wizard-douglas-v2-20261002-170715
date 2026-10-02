@@ -1,0 +1,353 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+
+import { useGamePlayers, type PlayerId } from '../../shared/GamePlayersContext'
+import { playCorrect, playTap, playWin, playWrong } from '../../shared/sound'
+import './RosiesBakeryPage.css'
+
+type Difficulty = 'easy' | 'normal' | 'hard'
+
+type Ingredient = {
+  id: string
+  label: string
+  art: string
+}
+
+type Recipe = {
+  name: string
+  ingredients: Ingredient[]
+}
+
+const I = (id: string, label: string, art = id): Ingredient => ({ id, label, art })
+
+const INGREDIENTS = {
+  cakeBase: I('cake-base', 'Cake', 'cake-base'),
+  cream: I('cream', 'Cream'),
+  pinkFrosting: I('pink-frosting', 'Pink frosting'),
+  buttercream: I('buttercream', 'Buttercream'),
+  sprinkles: I('sprinkles', 'Sprinkles'),
+  cherry: I('cherry', 'Cherry'),
+  strawberry: I('strawberry', 'Strawberry'),
+  cookie: I('cookie', 'Cookie'),
+  pancake: I('pancake', 'Pancake'),
+  butter: I('butter', 'Butter'),
+  syrup: I('syrup', 'Syrup'),
+  donut: I('donut', 'Donut'),
+  glaze: I('glaze', 'Glaze'),
+  croissant: I('croissant', 'Croissant'),
+  berry: I('berry', 'Berry'),
+} as const
+
+const ALL_INGREDIENTS = Object.values(INGREDIENTS)
+
+const RECIPES: Recipe[] = [
+  {
+    name: 'Magic Cupcake',
+    ingredients: [INGREDIENTS.cakeBase, INGREDIENTS.pinkFrosting, INGREDIENTS.sprinkles, INGREDIENTS.cherry],
+  },
+  {
+    name: 'Cookie Sandwich',
+    ingredients: [INGREDIENTS.cookie, INGREDIENTS.cream, INGREDIENTS.cookie],
+  },
+  {
+    name: 'Pancake Pile',
+    ingredients: [INGREDIENTS.pancake, INGREDIENTS.pancake, INGREDIENTS.butter, INGREDIENTS.syrup, INGREDIENTS.berry],
+  },
+  {
+    name: 'Berry Donut',
+    ingredients: [INGREDIENTS.donut, INGREDIENTS.glaze, INGREDIENTS.sprinkles, INGREDIENTS.berry],
+  },
+  {
+    name: 'Strawberry Cake',
+    ingredients: [INGREDIENTS.cakeBase, INGREDIENTS.cream, INGREDIENTS.strawberry, INGREDIENTS.cherry],
+  },
+  {
+    name: 'Croissant Treat',
+    ingredients: [INGREDIENTS.croissant, INGREDIENTS.buttercream, INGREDIENTS.strawberry],
+  },
+]
+
+const DIFFICULTY_META: Record<
+  Difficulty,
+  {
+    label: string
+    maxLayers: number
+    decoys: number
+  }
+> = {
+  easy: {
+    label: 'Easy',
+    maxLayers: 3,
+    decoys: 1,
+  },
+  normal: {
+    label: 'Normal',
+    maxLayers: 4,
+    decoys: 2,
+  },
+  hard: {
+    label: 'Hard',
+    maxLayers: 5,
+    decoys: 3,
+  },
+}
+
+function shuffled<T>(items: T[]) {
+  const next = [...items]
+
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    ;[next[index], next[swap]] = [next[swap], next[index]]
+  }
+
+  return next
+}
+
+function buildRecipePool(difficulty: Difficulty) {
+  const maxLayers = DIFFICULTY_META[difficulty].maxLayers
+  const eligible = RECIPES.filter((recipe) => recipe.ingredients.length <= maxLayers)
+  return eligible.length > 0 ? eligible : RECIPES
+}
+
+function makeRound(difficulty: Difficulty) {
+  const recipePool = buildRecipePool(difficulty)
+  const recipe = recipePool[Math.floor(Math.random() * recipePool.length)]
+  const decoyCount = DIFFICULTY_META[difficulty].decoys
+  const usedIds = new Set(recipe.ingredients.map((ingredient) => ingredient.id))
+  const decoys = shuffled(
+    ALL_INGREDIENTS.filter((ingredient) => !usedIds.has(ingredient.id)),
+  ).slice(0, decoyCount)
+
+  return {
+    recipe,
+    pantry: shuffled([...recipe.ingredients, ...decoys]),
+  }
+}
+
+function IngredientArt({ ingredient }: { ingredient: Ingredient }) {
+  return (
+    <span className={`wizard-ingredient wizard-ingredient--${ingredient.art}`} aria-hidden="true">
+      <i />
+      <b />
+      <em />
+    </span>
+  )
+}
+
+function TreatStack({
+  ingredients,
+  totalSlots,
+}: {
+  ingredients: Ingredient[]
+  totalSlots: number
+}) {
+  return (
+    <div className="wizard-treat">
+      <div className="wizard-treat__stack" aria-hidden="true">
+        {Array.from({ length: totalSlots }, (_, index) => ingredients[index] ?? null).map(
+          (ingredient, index) => (
+            <div
+              className={ingredient ? 'wizard-treat__slot' : 'wizard-treat__slot wizard-treat__slot--ghost'}
+              key={`${ingredient?.id ?? 'ghost'}-${index}`}
+            >
+              {ingredient ? <IngredientArt ingredient={ingredient} /> : <span className="wizard-treat__ghost" />}
+            </div>
+          ),
+        )}
+      </div>
+
+      <span className="wizard-treat__plate" />
+    </div>
+  )
+}
+
+export default function RosiesBakeryPage() {
+  const { names, resetStatus, setStatus } = useGamePlayers()
+
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const [currentPlayer, setCurrentPlayer] = useState<PlayerId>(1)
+  const [scores, setScores] = useState<Record<PlayerId, number>>({
+    1: 0,
+    2: 0,
+  })
+
+  const initialRound = useMemo(() => makeRound('easy'), [])
+  const [recipe, setRecipe] = useState<Recipe>(initialRound.recipe)
+  const [pantry, setPantry] = useState<Ingredient[]>(initialRound.pantry)
+  const [built, setBuilt] = useState<Ingredient[]>([])
+  const [phase, setPhase] = useState<'build' | 'done'>('build')
+  const [wrongId, setWrongId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState('Build it from bottom to top.')
+
+  function startRound(nextDifficulty = difficulty) {
+    const nextRound = makeRound(nextDifficulty)
+    setRecipe(nextRound.recipe)
+    setPantry(nextRound.pantry)
+    setBuilt([])
+    setPhase('build')
+    setWrongId(null)
+    setFeedback('Build it from bottom to top.')
+  }
+
+  function chooseDifficulty(nextDifficulty: Difficulty) {
+    if (difficulty === nextDifficulty) {
+      return
+    }
+
+    playTap()
+    setDifficulty(nextDifficulty)
+    startRound(nextDifficulty)
+  }
+
+  function addIngredient(ingredient: Ingredient) {
+    if (phase !== 'build') {
+      return
+    }
+
+    const expected = recipe.ingredients[built.length]
+
+    if (!expected) {
+      return
+    }
+
+    if (ingredient.id !== expected.id) {
+      playWrong()
+      setWrongId(ingredient.id)
+      setFeedback('Oops. Try the next layer from the order card.')
+      window.setTimeout(() => setWrongId(null), 420)
+      return
+    }
+
+    const nextBuilt = [...built, ingredient]
+    setBuilt(nextBuilt)
+
+    if (nextBuilt.length === recipe.ingredients.length) {
+      playWin()
+      setScores((current) => ({
+        ...current,
+        [currentPlayer]: current[currentPlayer] + 1,
+      }))
+      setPhase('done')
+      setFeedback('Magic! Order complete!')
+      return
+    }
+
+    playCorrect()
+    setFeedback('Yum! Keep going!')
+  }
+
+  function nextOrder() {
+    playTap()
+    const nextPlayer: PlayerId = currentPlayer === 1 ? 2 : 1
+    setCurrentPlayer(nextPlayer)
+    startRound()
+  }
+
+  function resetGame() {
+    playTap()
+    setCurrentPlayer(1)
+    setScores({ 1: 0, 2: 0 })
+    startRound()
+  }
+
+  useEffect(() => {
+    setStatus({
+      currentPlayer,
+      scores,
+      competitive: true,
+      label: phase === 'done' ? 'ORDER UP' : 'BUILD THE TREAT',
+    })
+  }, [currentPlayer, phase, scores, setStatus])
+
+  useEffect(() => () => resetStatus(), [resetStatus])
+
+  return (
+    <main className="wizard-bakery-page">
+      <header className="wizard-bakery-topbar">
+        <Link to="/" className="wizard-bakery-nav">
+          ← Games
+        </Link>
+
+        <div className="wizard-bakery-title">
+          <span>cute bakery build game</span>
+          <h1>Wizard Douglas Bakery</h1>
+        </div>
+
+        <button type="button" className="wizard-bakery-nav" onClick={resetGame}>
+          Reset
+        </button>
+      </header>
+
+      <section className="wizard-bakery-stage">
+        <div className="wizard-bakery-hero">
+          <div className="wizard-bakery-host" aria-hidden="true">
+            <span className="wizard-bakery-host__hat" />
+            <span className="wizard-bakery-host__face" />
+            <span className="wizard-bakery-host__stars" />
+          </div>
+
+          <div className="wizard-bakery-speech">
+            <span>Wizard Douglas says</span>
+            <strong>Make this treat!</strong>
+            <p>{feedback}</p>
+          </div>
+
+          <div className="wizard-bakery-difficulty" aria-label="Difficulty">
+            {(['easy', 'normal', 'hard'] as Difficulty[]).map((level) => (
+              <button
+                type="button"
+                key={level}
+                className={difficulty === level ? 'is-active' : ''}
+                onClick={() => chooseDifficulty(level)}
+              >
+                {DIFFICULTY_META[level].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="wizard-bakery-workspace">
+          <section className="wizard-card wizard-card--order">
+            <div className="wizard-card__eyebrow">Order</div>
+            <h2>{recipe.name}</h2>
+            <div className="wizard-card__player">{names[currentPlayer]}'s turn</div>
+            <TreatStack ingredients={recipe.ingredients} totalSlots={recipe.ingredients.length} />
+            <p>Copy the treat from bottom to top.</p>
+          </section>
+
+          <section className="wizard-card wizard-card--build">
+            <div className="wizard-card__eyebrow">Build</div>
+            <h2>Your treat</h2>
+            <TreatStack ingredients={built} totalSlots={recipe.ingredients.length} />
+            <p>
+              {phase === 'done'
+                ? 'Perfect! Tap next order for the next baker.'
+                : `Layer ${Math.min(built.length + 1, recipe.ingredients.length)} of ${recipe.ingredients.length}`}
+            </p>
+            {phase === 'done' && (
+              <button type="button" className="wizard-bakery-next" onClick={nextOrder}>
+                Next order
+              </button>
+            )}
+          </section>
+        </div>
+
+        <section className="wizard-pantry" aria-label="Ingredient choices">
+          {pantry.map((ingredient, index) => (
+            <button
+              type="button"
+              key={`${ingredient.id}-${index}`}
+              className={wrongId === ingredient.id ? 'wizard-pantry__item is-wrong' : 'wizard-pantry__item'}
+              onClick={() => addIngredient(ingredient)}
+              disabled={phase === 'done'}
+            >
+              <IngredientArt ingredient={ingredient} />
+              <strong>{ingredient.label}</strong>
+            </button>
+          ))}
+        </section>
+      </section>
+    </main>
+  )
+}
+

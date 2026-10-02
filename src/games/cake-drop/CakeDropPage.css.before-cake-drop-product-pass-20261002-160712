@@ -1,0 +1,1809 @@
+.cake-drop-game {
+  width: min(100%, 1120px);
+  height: 100svh;
+
+  margin: 0 auto;
+  padding: 18px 24px 22px;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr);
+
+  gap: 16px;
+
+  overflow: hidden;
+
+  background: #fffaf0;
+  color: #171717;
+}
+
+.cake-drop-topbar {
+  display: grid;
+  grid-template-columns:
+    110px
+    1fr
+    110px;
+
+  gap: 12px;
+  align-items: center;
+}
+
+.cake-drop-topbar h1 {
+  margin: 0;
+
+  text-align: center;
+
+  font-size:
+    clamp(
+      2rem,
+      5vh,
+      4.1rem
+    );
+
+  line-height: .9;
+  text-transform: uppercase;
+  letter-spacing: -.055em;
+}
+
+.cake-drop-home,
+.cake-drop-score {
+  min-height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border: 3px solid #171717;
+  box-shadow:
+    3px 4px 0 #171717;
+}
+
+.cake-drop-home {
+  justify-self: start;
+
+  padding: 7px 12px;
+
+  border-radius:
+    14px 12px 15px 13px;
+
+  background: #fffdf8;
+
+  color: #171717;
+  text-decoration: none;
+}
+
+.cake-drop-score {
+  justify-self: end;
+
+  min-width: 58px;
+
+  border-radius:
+    13px 16px 12px 15px;
+
+  background: #ffe33b;
+
+  font-size: 1.5rem;
+}
+
+/* -------------------------
+   STAGE
+   ------------------------- */
+
+.cake-drop-stage {
+  --turn-main: #20b9df;
+  --turn-soft: rgb(32 185 223 / .16);
+
+  position: relative;
+
+  min-height: 0;
+
+  overflow: hidden;
+
+  border: 4px solid #171717;
+  border-radius:
+    22px 18px 24px 19px;
+
+  background-color: #fffdf8;
+  background-image:
+    linear-gradient(
+      rgb(32 185 223 / .17)
+      1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(32 185 223 / .17)
+      1px,
+      transparent 1px
+    );
+
+  background-size:
+    22px 22px;
+
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.cake-drop-stage::before {
+  content: '';
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at 50% 14%,
+      var(--turn-soft),
+      transparent 42%
+    );
+
+  pointer-events: none;
+}
+
+.cake-drop-stage.is-player-1 {
+  --turn-main: #20b9df;
+  --turn-soft: rgb(32 185 223 / .18);
+}
+
+.cake-drop-stage.is-player-2 {
+  --turn-main: #ff9dc8;
+  --turn-soft: rgb(255 157 200 / .18);
+}
+
+/* -------------------------
+   PLAYER CARDS
+   ------------------------- */
+
+.cake-drop-player-rail {
+  position: absolute;
+  z-index: 20;
+
+  top: 14px;
+  left: 14px;
+
+  display: grid;
+  gap: 10px;
+
+  width: 220px;
+}
+
+.cake-drop-player-card {
+  display: grid;
+  grid-template-columns:
+    58px
+    1fr;
+
+  gap: 10px;
+  align-items: center;
+
+  padding: 8px;
+
+  border: 3px solid #171717;
+  border-radius:
+    18px 14px 17px 13px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    2px 3px 0 #171717;
+
+  opacity: .72;
+
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease,
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.cake-drop-player-card.is-active {
+  transform: translateY(-2px);
+  opacity: 1;
+
+  box-shadow:
+    4px 5px 0 #171717;
+}
+
+.cake-drop-player-card--one.is-active {
+  background: #dff7ff;
+}
+
+.cake-drop-player-card--two.is-active {
+  background: #ffe4f0;
+}
+
+.cake-drop-player-card__avatar {
+  aspect-ratio: 1;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border: 3px solid #171717;
+  border-radius:
+    16px 13px 18px 14px;
+
+  background-color: #fffdf8;
+  background-image:
+    linear-gradient(
+      rgb(32 185 223 / .15)
+      1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(32 185 223 / .15)
+      1px,
+      transparent 1px
+    );
+
+  background-size:
+    18px 18px;
+}
+
+.cake-drop-player-card__avatar img {
+  width: 84%;
+  height: 84%;
+
+  object-fit: contain;
+  display: block;
+
+  pointer-events: none;
+}
+
+.cake-drop-player-card__copy {
+  display: grid;
+  gap: 1px;
+}
+
+.cake-drop-player-card__copy span {
+  font-size: .7rem;
+  letter-spacing: .06em;
+}
+
+.cake-drop-player-card__copy strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* -------------------------
+   HUD
+   ------------------------- */
+
+.cake-drop-speed {
+  position: absolute;
+  z-index: 20;
+
+  top: 16px;
+  right: 16px;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  padding:
+    6px
+    8px;
+
+  border: 3px solid #171717;
+  border-radius:
+    15px 12px 16px 13px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    3px 4px 0 #171717;
+}
+
+.cake-drop-speed > span {
+  margin-right: 3px;
+
+  font-size: .67rem;
+  letter-spacing: .05em;
+}
+
+.cake-drop-speed button {
+  width: 31px;
+  height: 31px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 2px solid #171717;
+  border-radius: 50%;
+
+  background: #fffdf8;
+  color: #171717;
+
+  box-shadow:
+    1px 2px 0 #171717;
+
+  font-size: .75rem;
+}
+
+.cake-drop-speed button.is-active {
+  background: var(--turn-main);
+  transform: translateY(-2px);
+}
+
+.cake-drop-speed button:active {
+  transform:
+    translate(1px, 2px);
+
+  box-shadow: none;
+}
+
+.cake-drop-turn-pill {
+  position: absolute;
+  z-index: 18;
+
+  top: 16px;
+  left: 50%;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding:
+    6px
+    12px;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg);
+
+  border: 3px solid #171717;
+  border-radius: 999px;
+
+  background: #fffdf8;
+
+  box-shadow:
+    3px 4px 0 #171717;
+}
+
+.cake-drop-turn-pill img {
+  width: 28px;
+  height: 28px;
+
+  object-fit: contain;
+  display: block;
+
+  pointer-events: none;
+}
+
+.cake-drop-turn-pill span {
+  font-size: .82rem;
+  letter-spacing: .04em;
+}
+
+.cake-drop-instruction {
+  position: absolute;
+  z-index: 15;
+
+  left: 50%;
+  top: 62px;
+
+  margin: 0;
+
+  padding:
+    6px
+    12px;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg);
+
+  border: 3px solid #171717;
+  border-radius: 999px;
+
+  background: var(--turn-main);
+
+  font-size: .8rem;
+  letter-spacing: .04em;
+
+  pointer-events: none;
+}
+
+
+/* -------------------------
+   GUIDE / PLATE
+   ------------------------- */
+
+.cake-drop-guide {
+  position: absolute;
+
+  top: 190px;
+  bottom: 0;
+  left: 50%;
+
+  border-left:
+    3px dashed
+    rgb(23 23 23 / .12);
+
+  transform:
+    translateX(-50%);
+}
+
+.cake-drop-plate {
+  position: absolute;
+
+  z-index: 4;
+
+  left: 50%;
+
+  width: 42%;
+  height: 24px;
+
+  transform:
+    translateX(-50%)
+    rotate(.35deg);
+
+  border: 4px solid #171717;
+  border-radius:
+    45% 48% 52% 46%;
+
+  background: #20b9df;
+
+  box-shadow:
+    3px 4px 0 #171717;
+}
+
+/* -------------------------
+   CAKE PIECES
+   ------------------------- */
+
+.cake-drop-piece {
+  position: absolute;
+
+  z-index: 10;
+
+  width: 30%;
+  height: 46px;
+
+  transform:
+    translateX(-50%);
+
+  border: 4px solid #171717;
+  border-radius:
+    17px 18px 14px 15px;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  overflow: visible;
+
+  pointer-events: none;
+}
+
+.cake-drop-piece--pink {
+  background: #ff5d8f;
+}
+
+.cake-drop-piece--yellow {
+  background: #ffe33b;
+}
+
+.cake-drop-piece--blue {
+  background: #20b9df;
+}
+
+.cake-drop-piece__frost {
+  position: absolute;
+
+  left: 6%;
+  right: 6%;
+  top: -8px;
+
+  height: 16px;
+
+  border: 3px solid #171717;
+  border-radius:
+    16px 16px 12px 12px;
+
+  background: #fffdf8;
+}
+
+.cake-drop-piece__drip {
+  position: absolute;
+
+  top: 5px;
+
+  width: 14px;
+  height: 16px;
+
+  border: 3px solid #171717;
+  border-top: none;
+  border-radius:
+    0 0 10px 10px;
+
+  background: #fffdf8;
+}
+
+.cake-drop-piece__drip--one {
+  left: 22%;
+}
+
+.cake-drop-piece__drip--two {
+  right: 23%;
+}
+
+.cake-drop-piece__sprinkle {
+  position: absolute;
+
+  width: 10px;
+  height: 4px;
+
+  border-radius: 999px;
+
+  background: #171717;
+}
+
+.cake-drop-piece__sprinkle--one {
+  top: 18px;
+  left: 18%;
+
+  background: #ff9dc8;
+  transform: rotate(14deg);
+}
+
+.cake-drop-piece__sprinkle--two {
+  top: 24px;
+  left: 41%;
+
+  background: #20b9df;
+  transform: rotate(-18deg);
+}
+
+.cake-drop-piece__sprinkle--three {
+  top: 20px;
+  right: 22%;
+
+  background: #72d64d;
+  transform: rotate(18deg);
+}
+
+.cake-drop-piece__sprinkle--four {
+  top: 29px;
+  right: 38%;
+
+  background: #fffdf8;
+  transform: rotate(-14deg);
+}
+
+.cake-drop-piece__eye {
+  position: absolute;
+
+  top: 20px;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #171717;
+}
+
+.cake-drop-piece__eye--left {
+  left: 43%;
+}
+
+.cake-drop-piece__eye--right {
+  left: 54%;
+}
+
+.cake-drop-piece__smile {
+  position: absolute;
+
+  left: 50%;
+  bottom: 8px;
+
+  width: 16px;
+  height: 8px;
+
+  transform:
+    translateX(-50%);
+
+  border-bottom:
+    3px solid #171717;
+
+  border-radius:
+    0 0 16px 16px;
+}
+
+.cake-drop-piece__cherry {
+  position: absolute;
+
+  right: 12%;
+  top: -17px;
+
+  width: 16px;
+  height: 16px;
+
+  border: 3px solid #171717;
+  border-radius: 50%;
+
+  background: #ff5d8f;
+}
+
+.cake-drop-piece__cherry::before {
+  content: '';
+
+  position: absolute;
+
+  left: 5px;
+  top: -12px;
+
+  width: 3px;
+  height: 12px;
+
+  border-radius: 999px;
+
+  background: #171717;
+
+  transform: rotate(-18deg);
+}
+
+.cake-drop-piece--moving {
+  box-shadow:
+    0 0 0 4px var(--turn-main),
+    3px 4px 0 #171717;
+
+  animation:
+    cake-drop-bob
+    700ms
+    ease-in-out
+    infinite
+    alternate;
+}
+
+@keyframes cake-drop-bob {
+  from {
+    margin-top: 0;
+  }
+
+  to {
+    margin-top: 4px;
+  }
+}
+
+.cake-drop-piece--falling {
+  animation:
+    cake-drop-fall
+    500ms
+    cubic-bezier(
+      .32,
+      .04,
+      .42,
+      1
+    )
+    forwards;
+}
+
+@keyframes cake-drop-fall {
+  from {
+    top: 92px;
+  }
+
+  to {
+    top:
+      var(--cake-target);
+  }
+}
+
+/* -------------------------
+   FEEDBACK
+   ------------------------- */
+
+.cake-drop-feedback {
+  position: absolute;
+
+  z-index: 50;
+
+  top: 28%;
+  left: 50%;
+
+  width: max-content;
+  max-width: 80%;
+
+  margin: 0;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-5deg);
+
+  font-size:
+    clamp(
+      2.6rem,
+      8vw,
+      5.8rem
+    );
+
+  line-height: .85;
+  text-align: center;
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+.cake-drop-feedback--nice,
+.cake-drop-feedback--splat {
+  -webkit-text-stroke:
+    3px #171717;
+
+  paint-order:
+    stroke fill;
+
+  animation:
+    cake-drop-feedback-pop
+    380ms
+    ease-out
+    both;
+}
+
+.cake-drop-feedback--nice {
+  color: #72d64d;
+}
+
+.cake-drop-feedback--splat {
+  color: #ffe33b;
+}
+
+@keyframes cake-drop-feedback-pop {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      rotate(-5deg)
+      scale(.55);
+  }
+
+  70% {
+    transform:
+      translate(-50%, -50%)
+      rotate(-5deg)
+      scale(1.08);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      rotate(-5deg)
+      scale(1);
+  }
+}
+
+/* -------------------------
+   RESPONSIVE
+   ------------------------- */
+
+@media (max-width: 860px) {
+  .cake-drop-player-rail {
+    width: 188px;
+  }
+
+  .cake-drop-player-card {
+    grid-template-columns:
+      48px
+      1fr;
+  }
+
+  .cake-drop-player-card__copy strong {
+    font-size: .92rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .cake-drop-game {
+    padding: 12px;
+  }
+
+  .cake-drop-topbar {
+    grid-template-columns:
+      84px
+      1fr
+      56px;
+  }
+
+  .cake-drop-player-rail {
+    top: 10px;
+    left: 10px;
+
+    width: 150px;
+  }
+
+  .cake-drop-player-card {
+    grid-template-columns:
+      40px
+      1fr;
+
+    gap: 7px;
+    padding: 6px;
+  }
+
+  .cake-drop-player-card__copy span {
+    font-size: .58rem;
+  }
+
+  .cake-drop-player-card__copy strong {
+    font-size: .78rem;
+  }
+
+  .cake-drop-speed {
+    top: 10px;
+    right: 10px;
+  }
+
+  .cake-drop-speed > span {
+    display: none;
+  }
+
+  .cake-drop-speed button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cake-drop-turn-pill {
+    top: 94px;
+  }
+
+  .cake-drop-turn-pill span {
+    font-size: .72rem;
+  }
+
+  .cake-drop-instruction {
+    top: 132px;
+  }
+
+  .cake-drop-belt {
+    top: 156px;
+    width: min(46%, 270px);
+  }
+
+  .cake-drop-guide {
+    top: 196px;
+  }
+}
+
+/* =========================================
+   CAKE DROP FIXES
+   - restore graph-paper stage
+   - remove giant pink turn background
+   - put players on opposite sides
+   ========================================= */
+
+/* kill the old full-stage pink backgrounds */
+.cake-drop-stage,
+.cake-drop-stage.is-player-1,
+.cake-drop-stage.is-player-2 {
+  background-color: #fffdf8 !important;
+  background-image:
+    linear-gradient(
+      rgb(32 185 223 / 0.16) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(32 185 223 / 0.16) 1px,
+      transparent 1px
+    ) !important;
+  background-size: 22px 22px !important;
+}
+
+/* soften the wash so it doesn't read as a solid slab */
+.cake-drop-stage::before {
+  background:
+    radial-gradient(
+      circle at 50% 14%,
+      var(--turn-soft),
+      transparent 36%
+    ) !important;
+}
+
+/* keep turn indication subtle and clean */
+.cake-drop-stage.is-player-1 {
+  --turn-main: #20b9df;
+  --turn-soft: rgb(32 185 223 / 0.10);
+}
+
+.cake-drop-stage.is-player-2 {
+  --turn-main: #ff9dc8;
+  --turn-soft: rgb(255 157 200 / 0.10);
+}
+
+/* players on opposite sides */
+.cake-drop-player-rail {
+  position: absolute;
+  z-index: 20;
+
+  top: 14px;
+  left: 14px;
+  right: 14px;
+
+  width: auto !important;
+
+  display: flex !important;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cake-drop-player-card {
+  width: 220px;
+}
+
+/* visually anchor each player card */
+.cake-drop-player-card--one {
+  align-self: flex-start;
+}
+
+.cake-drop-player-card--two {
+  align-self: flex-start;
+}
+
+/* make inactive card readable but quieter */
+.cake-drop-player-card:not(.is-active) {
+  opacity: 0.68;
+  transform: translateY(0);
+  box-shadow: 2px 3px 0 #171717;
+}
+
+/* make active card obvious */
+.cake-drop-player-card.is-active {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 4px 5px 0 #171717;
+}
+
+.cake-drop-player-card--one.is-active {
+  background: #dff7ff;
+}
+
+.cake-drop-player-card--two.is-active {
+  background: #ffe4f0;
+}
+
+/* keep center UI centered and away from side cards */
+.cake-drop-turn-pill {
+  top: 16px !important;
+}
+
+.cake-drop-instruction {
+  top: 62px !important;
+}
+
+.cake-drop-belt {
+  top: 86px !important;
+}
+
+.cake-drop-guide {
+  top: 126px !important;
+}
+
+/* mobile: stack players again so it still fits */
+@media (max-width: 680px) {
+  .cake-drop-player-rail {
+    left: 10px;
+    right: 10px;
+
+    display: grid !important;
+    width: 150px !important;
+    gap: 10px;
+  }
+
+  .cake-drop-player-card {
+    width: auto;
+  }
+}
+
+/* =========================================
+   CAKE DROP LAYOUT FIX
+   - keep speed control from covering the turn pill
+   ========================================= */
+
+.cake-drop-speed {
+  top: 16px !important;
+  right: 16px !important;
+}
+
+.cake-drop-turn-pill {
+  top: 16px !important;
+  left: 170px !important;
+  transform:
+    rotate(-1deg) !important;
+}
+
+.cake-drop-instruction {
+  top: 64px !important;
+}
+
+/* when the stage gets narrower, stack the top controls cleanly */
+@media (max-width: 900px) {
+  .cake-drop-speed {
+    top: 16px !important;
+    right: 12px !important;
+
+    transform:
+      scale(.9) !important;
+    transform-origin:
+      top right;
+  }
+
+  .cake-drop-turn-pill {
+    top: 16px !important;
+    left: 12px !important;
+
+    transform:
+      scale(.9)
+      rotate(-1deg) !important;
+    transform-origin:
+      top left;
+  }
+
+  .cake-drop-instruction {
+    top: 64px !important;
+    left: 110px !important;
+
+    transform:
+      scale(.9)
+      rotate(-1deg) !important;
+    transform-origin:
+      top left;
+  }
+
+  .cake-drop-belt {
+    top: 128px !important;
+  }
+
+  .cake-drop-guide {
+    top: 168px !important;
+  }
+}
+
+/* =========================================
+   REAL TWO-PLAYER SCORING
+   ========================================= */
+
+.cake-drop-topbar-spacer {
+  width: 58px;
+  height: 44px;
+
+  justify-self: end;
+}
+
+/* scores live with the players */
+.cake-drop-player-card__copy {
+  position: relative;
+
+  padding-right: 42px;
+}
+
+.cake-drop-player-score {
+  position: absolute;
+
+  top: 50%;
+  right: 3px;
+
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  transform:
+    translateY(-50%);
+
+  border: 3px solid #171717;
+  border-radius: 50%;
+
+  background: #fffdf8;
+
+  color: #171717;
+
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.cake-drop-player-card--one.is-active
+.cake-drop-player-score {
+  background: #20b9df;
+}
+
+.cake-drop-player-card--two.is-active
+.cake-drop-player-score {
+  background: #ff9dc8;
+}
+
+/* center controls get their own lane */
+.cake-drop-turn-pill {
+  top: 14px !important;
+  left: 50% !important;
+  right: auto !important;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg) !important;
+}
+
+.cake-drop-speed {
+  top: 64px !important;
+  left: 50% !important;
+  right: auto !important;
+
+  transform:
+    translateX(-50%) !important;
+}
+
+.cake-drop-instruction {
+  top: 112px !important;
+  left: 50% !important;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg) !important;
+}
+
+.cake-drop-belt {
+  top: 145px !important;
+}
+
+.cake-drop-guide {
+  top: 185px !important;
+}
+
+/* =========================================
+   WINNER
+   ========================================= */
+
+.cake-drop-winner {
+  position: absolute;
+
+  z-index: 100;
+
+  inset: 50% auto auto 50%;
+
+  width:
+    min(
+      86%,
+      420px
+    );
+
+  display: grid;
+  justify-items: center;
+
+  gap: 8px;
+
+  padding:
+    22px;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-1deg);
+
+  border:
+    4px solid #171717;
+
+  border-radius:
+    22px 18px 24px 19px;
+
+  background-color:
+    #fffdf8;
+
+  background-image:
+    linear-gradient(
+      rgb(
+        32 185 223 / .16
+      )
+      1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(
+        32 185 223 / .16
+      )
+      1px,
+      transparent 1px
+    );
+
+  background-size:
+    22px 22px;
+
+  box-shadow:
+    7px 8px 0 #171717;
+}
+
+.cake-drop-winner img {
+  width:
+    min(
+      180px,
+      42vw
+    );
+
+  height: 150px;
+
+  object-fit: contain;
+
+  display: block;
+}
+
+.cake-drop-winner span {
+  font-size:
+    clamp(
+      2.2rem,
+      7vw,
+      4.5rem
+    );
+
+  line-height: .9;
+
+  text-align: center;
+}
+
+.cake-drop-winner strong {
+  padding:
+    5px
+    10px;
+
+  border:
+    3px solid #171717;
+
+  border-radius: 999px;
+
+  background: #ffe33b;
+}
+
+.cake-drop-winner button {
+  min-width: 190px;
+  min-height: 54px;
+
+  margin-top: 6px;
+
+  border:
+    3px solid #171717;
+
+  border-radius:
+    15px 12px 17px 14px;
+
+  background: #ff5d8f;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  color: #171717;
+
+  font-size: 1.15rem;
+}
+
+.cake-drop-winner button:active {
+  transform:
+    translate(
+      3px,
+      4px
+    );
+
+  box-shadow: none;
+}
+
+/* =========================================
+   REAL TWO-PLAYER SCORING
+   ========================================= */
+
+.cake-drop-topbar-spacer {
+  width: 58px;
+  height: 44px;
+
+  justify-self: end;
+}
+
+/* scores live with the players */
+.cake-drop-player-card__copy {
+  position: relative;
+
+  padding-right: 42px;
+}
+
+.cake-drop-player-score {
+  position: absolute;
+
+  top: 50%;
+  right: 3px;
+
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  transform:
+    translateY(-50%);
+
+  border: 3px solid #171717;
+  border-radius: 50%;
+
+  background: #fffdf8;
+
+  color: #171717;
+
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.cake-drop-player-card--one.is-active
+.cake-drop-player-score {
+  background: #20b9df;
+}
+
+.cake-drop-player-card--two.is-active
+.cake-drop-player-score {
+  background: #ff9dc8;
+}
+
+/* center controls get their own lane */
+.cake-drop-turn-pill {
+  top: 14px !important;
+  left: 50% !important;
+  right: auto !important;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg) !important;
+}
+
+.cake-drop-speed {
+  top: 64px !important;
+  left: 50% !important;
+  right: auto !important;
+
+  transform:
+    translateX(-50%) !important;
+}
+
+.cake-drop-instruction {
+  top: 112px !important;
+  left: 50% !important;
+
+  transform:
+    translateX(-50%)
+    rotate(-1deg) !important;
+}
+
+.cake-drop-belt {
+  top: 145px !important;
+}
+
+.cake-drop-guide {
+  top: 185px !important;
+}
+
+/* =========================================
+   WINNER
+   ========================================= */
+
+.cake-drop-winner {
+  position: absolute;
+
+  z-index: 100;
+
+  inset: 50% auto auto 50%;
+
+  width:
+    min(
+      86%,
+      420px
+    );
+
+  display: grid;
+  justify-items: center;
+
+  gap: 8px;
+
+  padding:
+    22px;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-1deg);
+
+  border:
+    4px solid #171717;
+
+  border-radius:
+    22px 18px 24px 19px;
+
+  background-color:
+    #fffdf8;
+
+  background-image:
+    linear-gradient(
+      rgb(
+        32 185 223 / .16
+      )
+      1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(
+        32 185 223 / .16
+      )
+      1px,
+      transparent 1px
+    );
+
+  background-size:
+    22px 22px;
+
+  box-shadow:
+    7px 8px 0 #171717;
+}
+
+.cake-drop-winner img {
+  width:
+    min(
+      180px,
+      42vw
+    );
+
+  height: 150px;
+
+  object-fit: contain;
+
+  display: block;
+}
+
+.cake-drop-winner span {
+  font-size:
+    clamp(
+      2.2rem,
+      7vw,
+      4.5rem
+    );
+
+  line-height: .9;
+
+  text-align: center;
+}
+
+.cake-drop-winner strong {
+  padding:
+    5px
+    10px;
+
+  border:
+    3px solid #171717;
+
+  border-radius: 999px;
+
+  background: #ffe33b;
+}
+
+.cake-drop-winner button {
+  min-width: 190px;
+  min-height: 54px;
+
+  margin-top: 6px;
+
+  border:
+    3px solid #171717;
+
+  border-radius:
+    15px 12px 17px 14px;
+
+  background: #ff5d8f;
+
+  box-shadow:
+    3px 4px 0 #171717;
+
+  color: #171717;
+
+  font-size: 1.15rem;
+}
+
+.cake-drop-winner button:active {
+  transform:
+    translate(
+      3px,
+      4px
+    );
+
+  box-shadow: none;
+}
+
+/* =========================================
+   KEEP GAMEPLAY OUT OF PLAYER HUD
+   ========================================= */
+
+/* center controls stay between the two players */
+.cake-drop-turn-pill {
+  top: 18px !important;
+}
+
+.cake-drop-speed {
+  top: 70px !important;
+}
+
+.cake-drop-instruction {
+  top: 118px !important;
+}
+
+/* conveyor and moving cake begin BELOW all HUD */
+.cake-drop-belt {
+  top: 178px !important;
+}
+
+.cake-drop-guide {
+  top: 218px !important;
+}
+
+/* moving/falling cake position is now set directly via the inline
+   bottom/--cake-start/--cake-target values computed in the component -
+   see the "REAL CAKE FALL" block below. */
+
+/* players own the left/right corners */
+.cake-drop-player-card--one {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.cake-drop-player-card--two {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.cake-drop-player-rail {
+  pointer-events: none;
+}
+
+.cake-drop-player-card {
+  pointer-events: auto;
+}
+
+
+/* =========================================
+   REAL CAKE FALL
+   - falls a constant visual distance above wherever it's about to
+     land, so the drop never collapses to nothing once the tower has
+     grown tall enough that the camera has to scroll
+   ========================================= */
+
+.cake-drop-piece--falling {
+  animation:
+    cake-drop-real-fall
+    650ms
+    cubic-bezier(.30, .02, .55, 1)
+    forwards !important;
+}
+
+@keyframes cake-drop-real-fall {
+  from {
+    bottom: var(--cake-start);
+  }
+
+  to {
+    bottom: var(--cake-target);
+  }
+}
+
+/* no conveyor */
+.cake-drop-belt,
+.cake-drop-belt__rail,
+.cake-drop-belt__roller {
+  display: none !important;
+}
+
+/* =========================================
+   CHARACTER SELECT
+   - elegant pre-game screen for both players
+     to pick who they're playing as
+   ========================================= */
+
+.cake-drop-select {
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    auto
+    minmax(0, 1fr)
+    auto;
+
+  gap: 16px;
+
+  padding: 22px 22px 20px;
+
+  border: 4px solid #171717;
+  border-radius: 22px 18px 24px 19px;
+
+  background: #a66ce8;
+
+  overflow: hidden;
+}
+
+.cake-drop-select-copy {
+  text-align: center;
+}
+
+.cake-drop-select-copy p {
+  width: fit-content;
+
+  margin: 0 auto 7px;
+  padding: 5px 10px;
+
+  border: 3px solid #171717;
+  border-radius: 999px;
+
+  background: #ffe33b;
+
+  font-size: .78rem;
+  letter-spacing: .06em;
+}
+
+.cake-drop-select-copy h2 {
+  margin: 0;
+
+  font-size: clamp(1.7rem, 4vh, 3rem);
+  line-height: .95;
+  text-transform: uppercase;
+  letter-spacing: -.04em;
+}
+
+.cake-drop-select-panels {
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 16px;
+}
+
+.cake-drop-select-panel {
+  min-height: 0;
+  min-width: 0;
+
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+
+  gap: 10px;
+
+  padding: 12px;
+
+  border: 4px solid #171717;
+  border-radius: 20px 16px 22px 17px;
+
+  background: #fffdf8;
+
+  box-shadow: 3px 4px 0 #171717;
+
+  overflow: hidden;
+}
+
+.cake-drop-select-panel--one {
+  box-shadow: 3px 4px 0 #171717, 0 0 0 4px #20b9df inset;
+}
+
+.cake-drop-select-panel--two {
+  box-shadow: 3px 4px 0 #171717, 0 0 0 4px #ff9dc8 inset;
+}
+
+.cake-drop-select-panel__head {
+  display: grid;
+  gap: 2px;
+
+  text-align: center;
+}
+
+.cake-drop-select-panel__head span {
+  font-size: .68rem;
+  letter-spacing: .08em;
+}
+
+.cake-drop-select-panel__head strong {
+  font-size: clamp(1rem, 3vh, 1.4rem);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: -.02em;
+}
+
+.cake-drop-select-roster {
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+
+  gap: clamp(3px, .7vh, 8px);
+
+  overflow: hidden;
+
+  padding: 4px 2px;
+}
+
+.cake-drop-select-choice {
+  min-width: 0;
+
+  min-height: 0;
+  height: 100%;
+
+  padding: 4px;
+
+  border: 3px solid transparent;
+  border-radius: 14px 11px 16px 12px;
+
+  background: transparent;
+
+  overflow: hidden;
+
+  transition:
+    transform 90ms ease,
+    background 90ms ease;
+}
+
+.cake-drop-select-choice img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  display: block;
+
+  pointer-events: none;
+}
+
+.cake-drop-select-choice.is-selected {
+  border-color: #171717;
+
+  background: #ffe33b;
+
+  transform: translateY(-3px);
+
+  box-shadow: 2px 3px 0 #171717;
+}
+
+.cake-drop-select-choice:active {
+  transform: translateY(1px) scale(.96);
+}
+
+.cake-drop-select-play {
+  width: min(100%, 360px);
+  min-height: 64px;
+
+  margin: 0 auto;
+
+  border: 4px solid #171717;
+  border-radius: 16px 19px 14px 18px;
+
+  background: #72d64d;
+
+  box-shadow: 4px 5px 0 #171717;
+
+  color: #171717;
+
+  font-size: clamp(1.3rem, 3.6vh, 2rem);
+  letter-spacing: -.02em;
+}
+
+.cake-drop-select-play:active {
+  transform: translate(4px, 5px);
+  box-shadow: none;
+}
+
+@media (max-width: 680px) {
+  .cake-drop-select {
+    padding: 14px 12px;
+  }
+
+  .cake-drop-select-panels {
+    gap: 10px;
+  }
+
+  .cake-drop-select-panel {
+    padding: 8px;
+  }
+
+  .cake-drop-select-roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

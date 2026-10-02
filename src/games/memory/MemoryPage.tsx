@@ -13,9 +13,16 @@ type Card = Character & {
   matched: boolean
 }
 
-const memoryCharacters = characters.slice(0, 18)
+const FULL_PAIR_COUNT = 18
+const COMPACT_PAIR_COUNT = 8
+const PORTRAIT_PHONE_QUERY = '(max-width: 700px) and (orientation: portrait)'
 
-function makeDeck(): Card[] {
+function isPortraitPhone() {
+  return typeof window !== 'undefined' && window.matchMedia(PORTRAIT_PHONE_QUERY).matches
+}
+
+function makeDeck(pairCount: number): Card[] {
+  const memoryCharacters = characters.slice(0, pairCount)
   const deck = [...memoryCharacters, ...memoryCharacters].map((character, index) => ({
     ...character,
     cardId: `${character.id}-${index}`,
@@ -31,7 +38,9 @@ function makeDeck(): Card[] {
 }
 
 export default function MemoryPage() {
-  const [cards, setCards] = useState<Card[]>(makeDeck)
+  const initialPairCount = isPortraitPhone() ? COMPACT_PAIR_COUNT : FULL_PAIR_COUNT
+  const [pairCount, setPairCount] = useState(initialPairCount)
+  const [cards, setCards] = useState<Card[]>(() => makeDeck(initialPairCount))
   const [selected, setSelected] = useState<number[]>([])
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1)
   const [scores, setScores] = useState({ 1: 0, 2: 0 })
@@ -40,8 +49,28 @@ export default function MemoryPage() {
   const { names, setStatus } = useGamePlayers()
 
   useEffect(() => {
-    setStatus({ competitive: true, currentPlayer, scores, label: 'MATCH A PAIR' })
+    setStatus({
+      competitive: true,
+      currentPlayer,
+      scores,
+      label: `SCORE ${scores[1]}–${scores[2]}`,
+    })
   }, [currentPlayer, scores, setStatus])
+
+  useEffect(() => {
+    const media = window.matchMedia(PORTRAIT_PHONE_QUERY)
+
+    const handleLayoutChange = () => {
+      const nextPairCount = media.matches ? COMPACT_PAIR_COUNT : FULL_PAIR_COUNT
+      if (nextPairCount === pairCount) return
+
+      setPairCount(nextPairCount)
+      restartGame(nextPairCount)
+    }
+
+    media.addEventListener('change', handleLayoutChange)
+    return () => media.removeEventListener('change', handleLayoutChange)
+  }, [pairCount])
 
   useEffect(() => () => {
     if (mismatchTimerRef.current !== null) {
@@ -88,7 +117,7 @@ export default function MemoryPage() {
         [currentPlayer]: currentScores[currentPlayer] + 1,
       }))
 
-      const matchedCount = cards.filter((c) => c.matched).length
+      const matchedCount = cards.filter((currentCard) => currentCard.matched).length
       const isLastPair = matchedCount + 2 === cards.length
 
       if (isLastPair) {
@@ -112,13 +141,13 @@ export default function MemoryPage() {
     }, 900)
   }
 
-  function restartGame() {
+  function restartGame(nextPairCount = pairCount) {
     if (mismatchTimerRef.current !== null) {
       window.clearTimeout(mismatchTimerRef.current)
       mismatchTimerRef.current = null
     }
 
-    setCards(makeDeck())
+    setCards(makeDeck(nextPairCount))
     setSelected([])
     setCurrentPlayer(1)
     setScores({ 1: 0, 2: 0 })
@@ -126,57 +155,40 @@ export default function MemoryPage() {
   }
 
   const gameFinished = cards.every((card) => card.matched)
+  const winningPlayer = scores[1] === scores[2] ? null : scores[1] > scores[2] ? 1 : 2
+  const resultTitle = winningPlayer === null ? 'Tie game!' : `${names[winningPlayer]} wins!`
 
   return (
     <main className="memory-game">
-      <div className="memory-topbar">
+      <header className="memory-topbar">
         <Link to="/" className="memory-home">
           ← Games
         </Link>
 
-        <h1>Memory</h1>
+        <div className="memory-title">
+          <h1>Memory</h1>
+          <p>Match two cards</p>
+        </div>
 
-        <button className="memory-reset" onClick={restartGame}>
+        <button className="memory-reset" onClick={() => restartGame()}>
           Reset
         </button>
-      </div>
+      </header>
 
-      <section className="memory-players" aria-label="Players">
-        <div
-          className={`memory-player memory-player--one ${
-            currentPlayer === 1 ? 'is-active' : ''
-          }`}
-        >
-          <span className="memory-player-label">{names[1]}</span>
-          <strong>{scores[1]}</strong>
-          {currentPlayer === 1 && (
-            <span className="memory-turn-label">Your turn!</span>
-          )}
-        </div>
-
-        <div
-          className={`memory-player memory-player--two ${
-            currentPlayer === 2 ? 'is-active' : ''
-          }`}
-        >
-          <span className="memory-player-label">{names[2]}</span>
-          <strong>{scores[2]}</strong>
-          {currentPlayer === 2 && (
-            <span className="memory-turn-label">Your turn!</span>
-          )}
-        </div>
-      </section>
-
-      <section className="memory-board">
+      <section
+        className={`memory-board ${pairCount === COMPACT_PAIR_COUNT ? 'memory-board--compact' : ''}`}
+        aria-label={`Memory board, ${pairCount} pairs`}
+      >
         {cards.map((card, index) => {
           const isVisible = card.matched || selected.includes(index)
 
           return (
             <button
               key={card.cardId}
-              className={`memory-card ${isVisible ? 'visible' : ''}`}
+              className={`memory-card ${isVisible ? 'visible' : ''} ${card.matched ? 'matched' : ''}`}
               onClick={() => handleCardClick(index)}
               aria-label={isVisible ? card.name : 'Hidden card'}
+              aria-pressed={isVisible}
             >
               {isVisible ? (
                 <img
@@ -193,15 +205,14 @@ export default function MemoryPage() {
       </section>
 
       {gameFinished && (
-        <section className="memory-game-over">
-          <h2>
-            {scores[1] === scores[2]
-              ? 'Tie game!'
-              : `${names[scores[1] > scores[2] ? 1 : 2]} wins!`}
-          </h2>
-
-          <button onClick={restartGame}>Play Again</button>
-        </section>
+        <div className="memory-result-backdrop" role="presentation">
+          <section className="memory-game-over" role="dialog" aria-modal="true" aria-labelledby="memory-result-title">
+            <span className="memory-result-kicker">GAME OVER</span>
+            <h2 id="memory-result-title">{resultTitle}</h2>
+            <p>{names[1]} {scores[1]} · {scores[2]} {names[2]}</p>
+            <button onClick={() => restartGame()}>Play Again</button>
+          </section>
+        </div>
       )}
     </main>
   )

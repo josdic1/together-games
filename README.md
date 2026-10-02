@@ -1,76 +1,60 @@
-# React + TypeScript + Vite
+# Together Games
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Together Games is a local-first collection of small illustrated games designed for two people to play side-by-side on a phone, tablet, or computer.
 
-Currently, two official plugins are available:
+## Product rules
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- The game library is the source of discovery; individual games stay visually distinct.
+- Every game declares one real interaction mode: `solo`, `cooperative`, `alternating`, `simultaneous`, or `versus`.
+- The shared player dock only appears when the game actually uses two people.
+- Player names persist locally. Games must keep working if browser storage is unavailable.
+- Color can reinforce state, but text or shape must also communicate it.
+- Reduced-motion preferences are respected globally.
 
-## React Compiler
+## Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`src/app/gameCatalog.ts` is the product source of truth for game identity, canonical route, mode, and menu artwork.
 
-## Expanding the ESLint configuration
+`src/app/gameRegistry.tsx` maps every catalog ID to exactly one React component. The typed `Record<GameId, ComponentType>` intentionally makes an incomplete registration a TypeScript error.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+`src/shared/GamePlayers.tsx` owns shared player names and game status. Solo games do not show the two-player dock.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+`src/shared/storage.ts` is the only allowed direct `localStorage` boundary. It converts storage failures into safe fallbacks instead of gameplay crashes.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Pure game rules should live outside React components and be tested directly. Connect Four and Water Router are the first examples.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Commands
 
+```bash
+npm ci
+npm run dev
+npm test
+npm run lint
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The test command currently verifies:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- game IDs and routes are unique
+- every catalog game has menu artwork
+- legacy aliases do not collide with canonical routes
+- Connect Four horizontal, vertical, and diagonal winner detection
+- Water Router movement, turning, escape, and self-collision behavior
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Adding a game
 
-```
-# together-games
+1. Add its metadata to `src/app/gameCatalog.ts`.
+2. Add its component to `componentByGameId` in `src/app/gameRegistry.tsx`.
+3. Choose the correct game mode rather than defaulting to two-player behavior.
+4. Add menu artwork under `public/art`.
+5. Put deterministic rules in a pure module when possible and add tests.
+6. Run `npm test`, `npm run lint`, and `npm run build` before shipping.
+
+## Canonical naming
+
+Current product names are authoritative. Historical names are not used internally.
+
+- `/games/skateboard-wheels` is canonical. `/games/freeze-dance` temporarily redirects.
+- `/games/rosies-bakery` is canonical. `/games/richie-bakery` temporarily redirects.
+
+Those redirects are compatibility shims only and can be removed after old links are no longer in circulation.

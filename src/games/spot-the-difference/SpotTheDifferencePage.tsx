@@ -9,6 +9,7 @@ import {
   type Character,
 } from '../../content/characters'
 import { playCorrect, playWrong } from '../../shared/sound'
+import { readStorage, writeStorage } from '../../shared/storage'
 import './SpotTheDifferencePage.css'
 
 type Phase =
@@ -22,6 +23,12 @@ type CrowdSize =
   | 48
   | 80
   | 120
+
+type Difficulty = {
+  label: string
+  count: CrowdSize
+  largeScreenOnly?: boolean
+}
 
 type Tile = {
   id: number
@@ -37,26 +44,45 @@ type Round = {
   oddCharacter: Character
 }
 
-const CROWD_SIZES: CrowdSize[] = [
-  12,
-  24,
-  48,
-  80,
-  120,
+const DIFFICULTIES: Difficulty[] = [
+  { label: 'Easy', count: 12 },
+  { label: 'Normal', count: 24 },
+  { label: 'Hard', count: 48 },
+  {
+    label: 'Expert',
+    count: 80,
+    largeScreenOnly: true,
+  },
+  {
+    label: 'Wild',
+    count: 120,
+    largeScreenOnly: true,
+  },
 ]
 
-const DEFAULT_CROWD: CrowdSize = 48
+const PHONE_DEFAULT_CROWD: CrowdSize = 24
+const LARGE_DEFAULT_CROWD: CrowdSize = 48
+const MAX_PHONE_PORTRAIT_CROWD: CrowdSize = 48
 const WRONG_HOLD = 360
 const FOUND_HOLD = 760
 
+// Keep the existing key so previous bests survive the UI rename to "Best streak".
 const BEST_STORAGE_KEY =
   'together-games:spot-it-best'
 
+function isPhonePortrait() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return window.matchMedia(
+    '(max-width: 560px) and (orientation: portrait)',
+  ).matches
+}
+
 function getSavedBest() {
   const saved = Number(
-    window.localStorage.getItem(
-      BEST_STORAGE_KEY,
-    ),
+    readStorage(BEST_STORAGE_KEY),
   )
 
   return Number.isFinite(saved) &&
@@ -100,9 +126,6 @@ function refillBag(): Character[] {
   return shuffle(characters)
 }
 
-// Group characters that share a `family` (see content/characters.ts) -
-// these are close visual variants of each other, so the odd one out
-// can be picked from the same family instead of the whole roster.
 const FAMILY_GROUPS = (() => {
   const groups = new Map<
     string,
@@ -153,8 +176,6 @@ function pickOddCharacter(
     ]
   }
 
-  // No designed look-alike for this character - fall back to any
-  // other character in the roster rather than dead-ending the round.
   const rest = characters.filter(
     (character) =>
       character.id !==
@@ -222,6 +243,13 @@ function buildRound(
 }
 
 export default function SpotTheDifferencePage() {
+  const [initialCrowd] = useState<CrowdSize>(
+    () =>
+      isPhonePortrait()
+        ? PHONE_DEFAULT_CROWD
+        : LARGE_DEFAULT_CROWD,
+  )
+
   const [initialSetup] = useState(() => {
     const bag = refillBag()
     const crowd = bag[0]
@@ -230,7 +258,7 @@ export default function SpotTheDifferencePage() {
     return {
       remainingBag: bag.slice(1),
       round: buildRound(
-        DEFAULT_CROWD,
+        initialCrowd,
         crowd,
         odd,
       ),
@@ -245,10 +273,14 @@ export default function SpotTheDifferencePage() {
     number | null
   >(null)
 
+  const crowdSizeRef =
+    useRef<CrowdSize>(initialCrowd)
+
+  const [phonePortrait, setPhonePortrait] =
+    useState(isPhonePortrait)
+
   const [crowdSize, setCrowdSize] =
-    useState<CrowdSize>(
-      DEFAULT_CROWD,
-    )
+    useState<CrowdSize>(initialCrowd)
 
   const [round, setRound] =
     useState<Round>(initialSetup.round)
@@ -262,7 +294,7 @@ export default function SpotTheDifferencePage() {
   const [score, setScore] =
     useState(0)
 
-  const [, setStreak] =
+  const [streak, setStreak] =
     useState(0)
 
   const [best, setBest] =
@@ -279,7 +311,7 @@ export default function SpotTheDifferencePage() {
   }
 
   function nextRound(
-    count = crowdSize,
+    count = crowdSizeRef.current,
   ) {
     clearTimer()
 
@@ -301,8 +333,20 @@ export default function SpotTheDifferencePage() {
   function chooseCrowdSize(
     count: CrowdSize,
   ) {
+    if (phase !== 'ready') {
+      return
+    }
+
+    crowdSizeRef.current = count
     setCrowdSize(count)
     nextRound(count)
+  }
+
+  function resetGame() {
+    clearTimer()
+    setScore(0)
+    setStreak(0)
+    nextRound()
   }
 
   function chooseTile(
@@ -334,7 +378,7 @@ export default function SpotTheDifferencePage() {
           )
 
           if (nextBest > currentBest) {
-            window.localStorage.setItem(
+            writeStorage(
               BEST_STORAGE_KEY,
               String(nextBest),
             )
@@ -367,20 +411,86 @@ export default function SpotTheDifferencePage() {
   }
 
   useEffect(() => {
+    const media = window.matchMedia(
+      '(max-width: 560px) and (orientation: portrait)',
+    )
+
+    function syncPhonePortrait() {
+      const compact = media.matches
+      setPhonePortrait(compact)
+
+      if (
+        compact &&
+        crowdSizeRef.current >
+          MAX_PHONE_PORTRAIT_CROWD
+      ) {
+        if (timerRef.current !== null) {
+          window.clearTimeout(
+            timerRef.current,
+          )
+          timerRef.current = null
+        }
+
+        const safeCrowd: CrowdSize = 48
+        crowdSizeRef.current = safeCrowd
+        setCrowdSize(safeCrowd)
+
+        const [crowd, odd] =
+          takePair(bagRef)
+
+        setRound(
+          buildRound(
+            safeCrowd,
+            crowd,
+            odd,
+          ),
+        )
+        setSelectedIndex(null)
+        setPhase('ready')
+      }
+    }
+
+    syncPhonePortrait()
+    media.addEventListener(
+      'change',
+      syncPhonePortrait,
+    )
+
     return () => {
-      clearTimer()
+      media.removeEventListener(
+        'change',
+        syncPhonePortrait,
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(
+          timerRef.current,
+        )
+      }
     }
   }, [])
 
   const shape =
     GRID_SHAPES[crowdSize]
 
-  const statusText =
+  const statusTitle =
     phase === 'found'
-      ? `FOUND ${round.oddCharacter.name.toUpperCase()}!`
+      ? `Found ${round.oddCharacter.name}!`
       : phase === 'checking'
-        ? 'NOPE!'
-        : `FIND THE ONE THAT ISN'T ${round.crowdCharacter.name.toUpperCase()}`
+        ? 'Nope — keep looking'
+        : 'Find the odd one'
+
+  const visibleDifficulties =
+    phonePortrait
+      ? DIFFICULTIES.filter(
+          (difficulty) =>
+            !difficulty.largeScreenOnly,
+        )
+      : DIFFICULTIES
 
   return (
     <main className="spot-it-game">
@@ -394,53 +504,84 @@ export default function SpotTheDifferencePage() {
 
         <h1>Spot It!</h1>
 
-        <div className="spot-it-score-card">
+        <button
+          type="button"
+          className="spot-it-reset"
+          onClick={resetGame}
+        >
+          Reset
+        </button>
+      </header>
+
+      <div className="spot-it-scoreboard" aria-label="Score">
+        <div>
           <span>Found</span>
           <strong>{score}</strong>
         </div>
-      </header>
 
-      <section className="spot-it-stage">
-        <div className="spot-it-best-card">
-          <span>Best</span>
-          <strong>{best}</strong>
+        <div>
+          <span>Streak</span>
+          <strong>{streak}</strong>
         </div>
 
+        <div>
+          <span>Best streak</span>
+          <strong>{best}</strong>
+        </div>
+      </div>
+
+      <section className="spot-it-stage">
         <div className="spot-it-controls">
-          <p
-            className={`spot-it-status ${
+          <div
+            className={`spot-it-prompt ${
               phase === 'found'
-                ? 'spot-it-status--found'
+                ? 'spot-it-prompt--found'
                 : phase === 'checking'
-                  ? 'spot-it-status--wrong'
+                  ? 'spot-it-prompt--wrong'
                   : ''
             }`}
             aria-live="polite"
           >
-            {statusText}
-          </p>
-
-          <div className="spot-it-crowd-picker">
-            <span>Crowd</span>
+            <img
+              src={round.crowdCharacter.image}
+              alt=""
+              draggable={false}
+            />
 
             <div>
-              {CROWD_SIZES.map(
-                (count) => (
+              <strong>{statusTitle}</strong>
+              <span>
+                Most are {round.crowdCharacter.name}
+              </span>
+            </div>
+          </div>
+
+          <div className="spot-it-difficulty">
+            <span>Difficulty</span>
+
+            <div>
+              {visibleDifficulties.map(
+                (difficulty) => (
                   <button
-                    key={count}
+                    key={difficulty.count}
                     type="button"
                     className={
-                      crowdSize === count
+                      crowdSize ===
+                      difficulty.count
                         ? 'is-active'
                         : ''
                     }
                     onClick={() =>
                       chooseCrowdSize(
-                        count,
+                        difficulty.count,
                       )
                     }
+                    disabled={
+                      phase !== 'ready'
+                    }
+                    aria-label={`${difficulty.label} difficulty, ${difficulty.count} characters`}
                   >
-                    {count}
+                    {difficulty.label}
                   </button>
                 ),
               )}

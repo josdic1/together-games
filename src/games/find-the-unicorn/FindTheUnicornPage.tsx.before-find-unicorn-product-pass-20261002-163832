@@ -1,0 +1,466 @@
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { Link } from 'react-router-dom'
+
+import { playTap, playCorrect, playWin } from '../../shared/sound'
+import './FindTheUnicornPage.css'
+import { readStorage, writeStorage } from '../../shared/storage'
+
+type Cell = {
+  id: number
+  unicorn: boolean
+  found: boolean
+}
+
+type Density = {
+  label: string
+  count: number
+  columns: number
+  rows: number
+}
+
+const UNICORN_COUNT = 5
+const EMPTY_REVEAL_MS = 460
+const UNICORN_REVEAL_MS = 680
+const ROUND_COMPLETE_MS = 1500
+
+const DENSITIES: Density[] = [
+  {
+    label: '48',
+    count: 48,
+    columns: 8,
+    rows: 6,
+  },
+  {
+    label: '96',
+    count: 96,
+    columns: 12,
+    rows: 8,
+  },
+  {
+    label: '160',
+    count: 160,
+    columns: 16,
+    rows: 10,
+  },
+  {
+    label: '240',
+    count: 240,
+    columns: 20,
+    rows: 12,
+  },
+]
+
+const DENSITY_STORAGE_KEY =
+  'together-games:find-unicorn-density-v2'
+
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items]
+
+  for (
+    let index = copy.length - 1;
+    index > 0;
+    index -= 1
+  ) {
+    const swap = Math.floor(
+      Math.random() * (index + 1),
+    )
+
+    const held = copy[index]
+    copy[index] = copy[swap]
+    copy[swap] = held
+  }
+
+  return copy
+}
+
+function buildCells(count: number): Cell[] {
+  const unicornIds = new Set(
+    shuffle(
+      Array.from(
+        { length: count },
+        (_, index) => index,
+      ),
+    ).slice(0, UNICORN_COUNT),
+  )
+
+  return Array.from(
+    { length: count },
+    (_, index) => ({
+      id: index,
+      unicorn: unicornIds.has(index),
+      found: false,
+    }),
+  )
+}
+
+function getStartingDensityIndex() {
+  const saved = Number(
+    readStorage(
+      DENSITY_STORAGE_KEY,
+    ),
+  )
+
+  if (
+    Number.isInteger(saved) &&
+    saved >= 0 &&
+    saved < DENSITIES.length
+  ) {
+    return saved
+  }
+
+  return 0
+}
+
+export default function FindTheUnicornPage() {
+  const [densityIndex, setDensityIndex] =
+    useState(getStartingDensityIndex)
+
+  const density = DENSITIES[densityIndex]
+
+  const [cells, setCells] =
+    useState<Cell[]>(() =>
+      buildCells(
+        DENSITIES[
+          getStartingDensityIndex()
+        ].count,
+      ),
+    )
+
+  const [activeCellId, setActiveCellId] =
+    useState<number | null>(null)
+
+  const [isPaused, setIsPaused] =
+    useState(false)
+
+  const [roundComplete, setRoundComplete] =
+    useState(false)
+
+  const [roundsCleared, setRoundsCleared] =
+    useState(0)
+
+  const revealTimerRef =
+    useRef<number | null>(null)
+
+  const roundTimerRef =
+    useRef<number | null>(null)
+
+  const foundCount = useMemo(
+    () =>
+      cells.filter(
+        (cell) => cell.found,
+      ).length,
+    [cells],
+  )
+
+  function clearTimers() {
+    if (revealTimerRef.current) {
+      window.clearTimeout(
+        revealTimerRef.current,
+      )
+
+      revealTimerRef.current = null
+    }
+
+    if (roundTimerRef.current) {
+      window.clearTimeout(
+        roundTimerRef.current,
+      )
+
+      roundTimerRef.current = null
+    }
+  }
+
+  function resetRound(
+    nextDensityIndex = densityIndex,
+  ) {
+    clearTimers()
+
+    const nextDensity =
+      DENSITIES[nextDensityIndex]
+
+    setCells(
+      buildCells(nextDensity.count),
+    )
+
+    setActiveCellId(null)
+    setIsPaused(false)
+    setRoundComplete(false)
+  }
+
+  function chooseDensity(index: number) {
+    if (index === densityIndex) {
+      return
+    }
+
+    writeStorage(
+      DENSITY_STORAGE_KEY,
+      String(index),
+    )
+
+    setDensityIndex(index)
+    resetRound(index)
+  }
+
+  function openCell(id: number) {
+    if (
+      isPaused ||
+      roundComplete ||
+      activeCellId !== null
+    ) {
+      return
+    }
+
+    const cell = cells.find(
+      (item) => item.id === id,
+    )
+
+    if (!cell || cell.found) {
+      return
+    }
+
+    playTap()
+    setActiveCellId(id)
+    setIsPaused(true)
+
+    if (!cell.unicorn) {
+      revealTimerRef.current =
+        window.setTimeout(() => {
+          setActiveCellId(null)
+          setIsPaused(false)
+          revealTimerRef.current = null
+        }, EMPTY_REVEAL_MS)
+
+      return
+    }
+
+    revealTimerRef.current =
+      window.setTimeout(() => {
+        setCells((current) =>
+          current.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  found: true,
+                }
+              : item,
+          ),
+        )
+
+        setActiveCellId(null)
+        revealTimerRef.current = null
+
+        const nextFoundCount =
+          foundCount + 1
+
+        if (
+          nextFoundCount ===
+          UNICORN_COUNT
+        ) {
+          playWin()
+          setRoundComplete(true)
+
+          roundTimerRef.current =
+            window.setTimeout(() => {
+              setRoundsCleared(
+                (current) =>
+                  current + 1,
+              )
+
+              setCells(
+                buildCells(
+                  density.count,
+                ),
+              )
+
+              setRoundComplete(false)
+              setIsPaused(false)
+              roundTimerRef.current = null
+            }, ROUND_COMPLETE_MS)
+
+          return
+        }
+
+        playCorrect()
+        setIsPaused(false)
+      }, UNICORN_REVEAL_MS)
+  }
+
+  useEffect(() => {
+    return () => {
+      clearTimers()
+    }
+  }, [])
+
+  return (
+    <main className="unicorn-hunt-game">
+      <header className="unicorn-hunt-topbar">
+        <Link
+          to="/"
+          className="unicorn-hunt-home"
+        >
+          ← Games
+        </Link>
+
+        <h1>
+          Find Unicorn
+        </h1>
+
+        <div className="unicorn-hunt-score">
+          <span>
+            FOUND
+          </span>
+
+          <strong>
+            {foundCount} / {UNICORN_COUNT}
+          </strong>
+        </div>
+      </header>
+
+      <section
+        className="unicorn-hunt-stage"
+        aria-label={`Find five unicorns hidden under ${density.count} cacti.`}
+      >
+        <div className="unicorn-hunt-rounds">
+          <span>
+            ROUNDS
+          </span>
+
+          <strong>
+            {roundsCleared}
+          </strong>
+        </div>
+
+        <div
+          className="unicorn-hunt-density"
+          onPointerDown={(event) =>
+            event.stopPropagation()
+          }
+        >
+          <span>
+            CACTI
+          </span>
+
+          <div>
+            {DENSITIES.map(
+              (option, index) => (
+                <button
+                  key={option.count}
+                  type="button"
+                  className={
+                    densityIndex === index
+                      ? 'is-active'
+                      : ''
+                  }
+                  onClick={() =>
+                    chooseDensity(index)
+                  }
+                  aria-pressed={
+                    densityIndex === index
+                  }
+                >
+                  {option.label}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+
+        <p className="unicorn-hunt-instruction">
+          TAP A CACTUS
+        </p>
+
+        <div
+          className={`unicorn-hunt-board ${
+            isPaused
+              ? 'is-paused'
+              : ''
+          }`}
+          style={{
+            gridTemplateColumns:
+              `repeat(${density.columns}, minmax(0, 1fr))`,
+            gridTemplateRows:
+              `repeat(${density.rows}, minmax(0, 1fr))`,
+          }}
+        >
+          {cells.map((cell) => {
+            const isActive =
+              activeCellId === cell.id
+
+            const isOpen =
+              isActive || cell.found
+
+            const showUnicorn =
+              cell.unicorn && isOpen
+
+            return (
+              <button
+                key={cell.id}
+                type="button"
+                className={`unicorn-hunt-cell ${
+                  isActive
+                    ? 'is-active'
+                    : ''
+                } ${
+                  cell.found
+                    ? 'is-found'
+                    : ''
+                }`}
+                onClick={() =>
+                  openCell(cell.id)
+                }
+                aria-label={
+                  cell.found
+                    ? 'Found unicorn'
+                    : 'Look under cactus'
+                }
+                aria-disabled={
+                  isPaused || cell.found
+                }
+              >
+                <span
+                  className={`unicorn-hunt-under ${
+                    showUnicorn
+                      ? 'has-unicorn'
+                      : 'is-empty'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {showUnicorn && (
+                    <img
+                      src="/art/find-unicorn/unicorn.png"
+                      alt=""
+                      draggable={false}
+                    />
+                  )}
+                </span>
+
+                <span className="unicorn-hunt-cactus-wrap">
+                  <img
+                    className="unicorn-hunt-cactus"
+                    src="/art/find-unicorn/cactus.png"
+                    alt=""
+                    draggable={false}
+                  />
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {roundComplete && (
+          <div
+            className="unicorn-hunt-complete"
+            aria-live="polite"
+          >
+            FOUND THEM ALL!
+          </div>
+        )}
+      </section>
+    </main>
+  )
+}

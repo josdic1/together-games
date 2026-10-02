@@ -6,7 +6,15 @@ import {
 } from 'react'
 import { Link } from 'react-router-dom'
 
-import { playTap, playCorrect, playWin } from '../../shared/sound'
+import {
+  playCorrect,
+  playTap,
+  playWin,
+} from '../../shared/sound'
+import {
+  readStorage,
+  writeStorage,
+} from '../../shared/storage'
 import './FindTheUnicornPage.css'
 
 type Cell = {
@@ -23,31 +31,31 @@ type Density = {
 }
 
 const UNICORN_COUNT = 5
-const EMPTY_REVEAL_MS = 460
-const UNICORN_REVEAL_MS = 680
-const ROUND_COMPLETE_MS = 1500
+const EMPTY_REVEAL_MS = 320
+const UNICORN_REVEAL_MS = 560
+const ROUND_COMPLETE_MS = 1300
 
 const DENSITIES: Density[] = [
   {
-    label: '48',
+    label: 'Easy',
     count: 48,
     columns: 8,
     rows: 6,
   },
   {
-    label: '96',
+    label: 'Normal',
     count: 96,
     columns: 12,
     rows: 8,
   },
   {
-    label: '160',
+    label: 'Hard',
     count: 160,
     columns: 16,
     rows: 10,
   },
   {
-    label: '240',
+    label: 'Wild',
     count: 240,
     columns: 20,
     rows: 12,
@@ -97,9 +105,9 @@ function buildCells(count: number): Cell[] {
   )
 }
 
-function getStartingDensityIndex() {
+function getSavedDensityIndex() {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       DENSITY_STORAGE_KEY,
     ),
   )
@@ -115,11 +123,35 @@ function getStartingDensityIndex() {
   return 0
 }
 
+function isPortraitPhoneNow() {
+  return window.matchMedia(
+    '(max-width: 760px) and (orientation: portrait)',
+  ).matches
+}
+
+function getStartingDensityIndex() {
+  const saved =
+    getSavedDensityIndex()
+
+  if (
+    isPortraitPhoneNow() &&
+    saved > 1
+  ) {
+    return 1
+  }
+
+  return saved
+}
+
 export default function FindTheUnicornPage() {
+  const [isPortraitPhone, setIsPortraitPhone] =
+    useState(isPortraitPhoneNow)
+
   const [densityIndex, setDensityIndex] =
     useState(getStartingDensityIndex)
 
-  const density = DENSITIES[densityIndex]
+  const density =
+    DENSITIES[densityIndex]
 
   const [cells, setCells] =
     useState<Cell[]>(() =>
@@ -142,6 +174,9 @@ export default function FindTheUnicornPage() {
   const [roundsCleared, setRoundsCleared] =
     useState(0)
 
+  const [hasPlayed, setHasPlayed] =
+    useState(false)
+
   const revealTimerRef =
     useRef<number | null>(null)
 
@@ -155,6 +190,16 @@ export default function FindTheUnicornPage() {
       ).length,
     [cells],
   )
+
+  const availableDensities =
+    isPortraitPhone
+      ? DENSITIES.slice(0, 2)
+      : DENSITIES
+
+  const canChangeDifficulty =
+    foundCount === 0 &&
+    activeCellId === null &&
+    !roundComplete
 
   function clearTimers() {
     if (revealTimerRef.current) {
@@ -191,12 +236,21 @@ export default function FindTheUnicornPage() {
     setRoundComplete(false)
   }
 
+  function resetGame() {
+    setRoundsCleared(0)
+    setHasPlayed(false)
+    resetRound()
+  }
+
   function chooseDensity(index: number) {
-    if (index === densityIndex) {
+    if (
+      index === densityIndex ||
+      !canChangeDifficulty
+    ) {
       return
     }
 
-    window.localStorage.setItem(
+    writeStorage(
       DENSITY_STORAGE_KEY,
       String(index),
     )
@@ -222,6 +276,7 @@ export default function FindTheUnicornPage() {
       return
     }
 
+    setHasPlayed(true)
     playTap()
     setActiveCellId(id)
     setIsPaused(true)
@@ -290,6 +345,53 @@ export default function FindTheUnicornPage() {
   }
 
   useEffect(() => {
+    const media = window.matchMedia(
+      '(max-width: 760px) and (orientation: portrait)',
+    )
+
+    function syncViewport() {
+      const portrait =
+        media.matches
+
+      setIsPortraitPhone(
+        portrait,
+      )
+
+      if (
+        portrait &&
+        densityIndex > 1
+      ) {
+        const nextIndex = 1
+
+        writeStorage(
+          DENSITY_STORAGE_KEY,
+          String(nextIndex),
+        )
+
+        setDensityIndex(
+          nextIndex,
+        )
+
+        resetRound(
+          nextIndex,
+        )
+      }
+    }
+
+    media.addEventListener(
+      'change',
+      syncViewport,
+    )
+
+    return () => {
+      media.removeEventListener(
+        'change',
+        syncViewport,
+      )
+    }
+  }, [densityIndex])
+
+  useEffect(() => {
     return () => {
       clearTimers()
     }
@@ -309,69 +411,86 @@ export default function FindTheUnicornPage() {
           Find Unicorn
         </h1>
 
-        <div className="unicorn-hunt-score">
-          <span>
-            FOUND
-          </span>
-
-          <strong>
-            {foundCount} / {UNICORN_COUNT}
-          </strong>
-        </div>
+        <button
+          type="button"
+          className="unicorn-hunt-reset"
+          onClick={resetGame}
+        >
+          Reset
+        </button>
       </header>
 
       <section
-        className="unicorn-hunt-stage"
+        className={`unicorn-hunt-stage density-${density.count}`}
         aria-label={`Find five unicorns hidden under ${density.count} cacti.`}
       >
-        <div className="unicorn-hunt-rounds">
-          <span>
-            ROUNDS
-          </span>
+        <div className="unicorn-hunt-controls">
+          <div className="unicorn-hunt-stat">
+            <span>
+              FOUND
+            </span>
 
-          <strong>
-            {roundsCleared}
-          </strong>
-        </div>
+            <strong>
+              {foundCount}/{UNICORN_COUNT}
+            </strong>
+          </div>
 
-        <div
-          className="unicorn-hunt-density"
-          onPointerDown={(event) =>
-            event.stopPropagation()
-          }
-        >
-          <span>
-            CACTI
-          </span>
+          <div className="unicorn-hunt-density">
+            {availableDensities.map(
+              (option) => {
+                const index =
+                  DENSITIES.indexOf(
+                    option,
+                  )
 
-          <div>
-            {DENSITIES.map(
-              (option, index) => (
-                <button
-                  key={option.count}
-                  type="button"
-                  className={
-                    densityIndex === index
-                      ? 'is-active'
-                      : ''
-                  }
-                  onClick={() =>
-                    chooseDensity(index)
-                  }
-                  aria-pressed={
-                    densityIndex === index
-                  }
-                >
-                  {option.label}
-                </button>
-              ),
+                return (
+                  <button
+                    key={option.count}
+                    type="button"
+                    className={
+                      densityIndex === index
+                        ? 'is-active'
+                        : ''
+                    }
+                    onClick={() =>
+                      chooseDensity(index)
+                    }
+                    aria-pressed={
+                      densityIndex === index
+                    }
+                    disabled={
+                      !canChangeDifficulty &&
+                      densityIndex !== index
+                    }
+                    title={
+                      canChangeDifficulty
+                        ? `${option.label}: ${option.count} cacti`
+                        : 'Finish this round before changing difficulty'
+                    }
+                  >
+                    {option.label}
+                  </button>
+                )
+              },
             )}
+          </div>
+
+          <div className="unicorn-hunt-stat">
+            <span>
+              CLEARED
+            </span>
+
+            <strong>
+              {roundsCleared}
+            </strong>
           </div>
         </div>
 
-        <p className="unicorn-hunt-instruction">
-          TAP A CACTUS
-        </p>
+        {!hasPlayed && (
+          <p className="unicorn-hunt-instruction">
+            Tap a cactus
+          </p>
+        )}
 
         <div
           className={`unicorn-hunt-board ${
@@ -463,3 +582,4 @@ export default function FindTheUnicornPage() {
     </main>
   )
 }
+

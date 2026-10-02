@@ -10,6 +10,7 @@ import { characters } from '../../content/characters'
 import { playTap, playCorrect, playWrong } from '../../shared/sound'
 
 import './BugJumpPage.css'
+import { readStorage, writeStorage } from '../../shared/storage'
 
 type Phase =
   | 'choose'
@@ -77,7 +78,7 @@ const DENSITY_STORAGE_KEY =
 
 function getStartingCharacterIndex() {
   const savedId =
-    window.localStorage.getItem(
+    readStorage(
       STORAGE_KEY,
     )
 
@@ -112,7 +113,7 @@ function getSavedLevel(
 ) {
   const saved =
     Number(
-      window.localStorage.getItem(
+      readStorage(
         key,
       ),
     )
@@ -294,7 +295,7 @@ export default function BugJumpPage() {
 
     setCharacterIndex(index)
 
-    window.localStorage.setItem(
+    writeStorage(
       STORAGE_KEY,
       character.id,
     )
@@ -305,7 +306,7 @@ export default function BugJumpPage() {
   ) {
     setSpeedLevel(level)
 
-    window.localStorage.setItem(
+    writeStorage(
       SPEED_STORAGE_KEY,
       String(level),
     )
@@ -324,7 +325,7 @@ export default function BugJumpPage() {
     jumpDurationRef.current =
       duration
 
-    window.localStorage.setItem(
+    writeStorage(
       FLOAT_STORAGE_KEY,
       String(level),
     )
@@ -335,7 +336,7 @@ export default function BugJumpPage() {
   ) {
     setDensityLevel(level)
 
-    window.localStorage.setItem(
+    writeStorage(
       DENSITY_STORAGE_KEY,
       String(level),
     )

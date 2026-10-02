@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useGamePlayers } from '../../shared/GamePlayersContext'
 import { playTap } from '../../shared/sound'
+import {
+  advanceWaterFlow,
+  freshWaterFlow,
+  waterCellKey,
+  type WaterFlow as Flow,
+} from './waterRouterLogic'
 import './WaterRouterPage.css'
-
-type Cell = { row: number; col: number }
-type Direction = { dr: number; dc: number }
-type Phase = 'flowing' | 'lost' | 'escaped'
-type Flow = { path: Cell[]; direction: Direction; phase: Phase }
 type GridPreset = 'small' | 'medium' | 'large'
 type SpeedPreset = 'slow' | 'medium' | 'fast'
 
@@ -21,23 +22,17 @@ const SPEEDS: Record<SpeedPreset, { ms: number; label: string }> = {
   medium: { ms: 420, label: 'Mid' },
   fast: { ms: 260, label: 'Fast' },
 }
-const RIGHT: Direction = { dr: 0, dc: 1 }
-const DIRS: Direction[] = [RIGHT, { dr: 1, dc: 0 }, { dr: -1, dc: 0 }, { dr: 0, dc: -1 }]
-
-function keyOf(cell: Cell) { return `${cell.row}:${cell.col}` }
-function sameDirection(a: Direction, b: Direction) { return a.dr === b.dr && a.dc === b.dc }
-function freshFlow(rows: number): Flow { return { path: [{ row: Math.floor(rows / 2), col: 0 }], direction: RIGHT, phase: 'flowing' } }
 
 export default function WaterRouterPage() {
   const [gridPreset, setGridPreset] = useState<GridPreset>('medium')
   const [speedPreset, setSpeedPreset] = useState<SpeedPreset>('medium')
   const { rows, cols } = GRID_PRESETS[gridPreset]
   const [blocks, setBlocks] = useState<Set<string>>(() => new Set())
-  const [flow, setFlow] = useState<Flow>(() => freshFlow(rows))
+  const [flow, setFlow] = useState<Flow>(() => freshWaterFlow(rows))
   const timerRef = useRef<number | null>(null)
   const { setStatus } = useGamePlayers()
 
-  const visited = useMemo(() => new Set(flow.path.map(keyOf)), [flow.path])
+  const visited = useMemo(() => new Set(flow.path.map(waterCellKey)), [flow.path])
 
   useEffect(() => {
     setStatus({ competitive: false, label: flow.phase === 'flowing' ? 'ROUTE THE WATER' : flow.phase === 'lost' ? 'WATER COLLISION' : 'RIVER ESCAPED' })
@@ -47,27 +42,7 @@ export default function WaterRouterPage() {
     if (flow.phase !== 'flowing') return undefined
 
     timerRef.current = window.setInterval(() => {
-      setFlow((current) => {
-        if (current.phase !== 'flowing') return current
-        const currentCell = current.path[current.path.length - 1]
-        const reverse = { dr: -current.direction.dr, dc: -current.direction.dc }
-        const options = [
-          current.direction,
-          ...DIRS.filter((candidate) => !sameDirection(candidate, current.direction) && !sameDirection(candidate, reverse)),
-        ]
-
-        for (const candidate of options) {
-          const next = { row: currentCell.row + candidate.dr, col: currentCell.col + candidate.dc }
-          if (next.col >= cols) return { ...current, direction: candidate, phase: 'escaped' }
-          if (next.row < 0 || next.row >= rows || next.col < 0) continue
-          const nextKey = keyOf(next)
-          if (blocks.has(nextKey)) continue
-          if (current.path.some((cell) => keyOf(cell) === nextKey)) return { ...current, phase: 'lost' }
-          return { path: [...current.path, next], direction: candidate, phase: 'flowing' }
-        }
-
-        return { ...current, phase: 'lost' }
-      })
+      setFlow((current) => advanceWaterFlow(current, blocks, rows, cols))
     }, SPEEDS[speedPreset].ms)
 
     return () => {
@@ -91,7 +66,7 @@ export default function WaterRouterPage() {
   function reset(nextGrid: GridPreset = gridPreset) {
     const nextRows = GRID_PRESETS[nextGrid].rows
     setBlocks(new Set())
-    setFlow(freshFlow(nextRows))
+    setFlow(freshWaterFlow(nextRows))
   }
 
   function changeGrid(nextGrid: GridPreset) {
@@ -124,7 +99,7 @@ export default function WaterRouterPage() {
             const row = Math.floor(index / cols)
             const col = index % cols
             const key = `${row}:${col}`
-            const waterIndex = flow.path.findIndex((cell) => keyOf(cell) === key)
+            const waterIndex = flow.path.findIndex((cell) => waterCellKey(cell) === key)
             return (
               <button
                 type="button"

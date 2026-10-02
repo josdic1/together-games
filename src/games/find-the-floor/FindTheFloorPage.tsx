@@ -12,6 +12,7 @@ import {
 } from '../../content/characters'
 import { playTap, playCorrect, playWrong } from '../../shared/sound'
 import './FindTheFloorPage.css'
+import { readStorage, writeStorage } from '../../shared/storage'
 
 type Phase =
   | 'waiting'
@@ -75,7 +76,7 @@ const BEST_STREAK_STORAGE_KEY =
 
 function getSavedBestStreak() {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       BEST_STREAK_STORAGE_KEY,
     ),
   )
@@ -372,7 +373,7 @@ export default function FindTheFloorPage() {
                   Math.max(best, next)
 
                 if (nextBest > best) {
-                  window.localStorage.setItem(
+                  writeStorage(
                     BEST_STREAK_STORAGE_KEY,
                     String(nextBest),
                   )

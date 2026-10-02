@@ -1,59 +1,147 @@
-.illustrated-menu {
+.game-library {
   width: 100%;
   height: 100svh;
   display: grid;
   place-items: center;
-  padding: 8px 10px 72px;
+  padding: 4px 10px 10px;
   overflow: hidden;
   background: #fffaf0;
 }
 
-.illustrated-menu__stage {
-  position: relative;
-  width: min(100%, 1480px);
-  max-height: 100%;
-  aspect-ratio: 3 / 2;
+.game-library__content {
+  width: min(96vw, calc((100svh - 104px) * 1.985), 1625px);
+  min-width: 0;
 }
 
-.illustrated-menu__art {
+.game-library__header {
+  display: grid;
+  place-items: center;
+  margin: 0 0 6px;
+}
+
+.game-library__logo {
+  display: block;
+  width: 33.6%;
+  min-width: 300px;
+  max-width: 546px;
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.game-library__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px 8px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.game-card {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 13px;
+  outline: none;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.game-card__art {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
   user-select: none;
   pointer-events: none;
 }
 
-.illustrated-menu__links {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  column-gap: 0.6%;
-  row-gap: 0.8%;
-  padding: 10.7% 1.7% 8.7%;
+.game-card:hover {
+  transform: translateY(-2px);
 }
 
-.illustrated-menu__link {
-  display: block;
-  min-width: 0;
-  min-height: 0;
-  border-radius: 16px;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+.game-card:active {
+  transform: translateY(0);
 }
 
-.illustrated-menu__link:focus-visible {
-  box-shadow: inset 0 0 0 5px #fff, inset 0 0 0 9px #171717;
+.game-card:focus-visible {
+  box-shadow: 0 0 0 4px #171717;
 }
 
-.illustrated-menu__link:active {
-  background: rgb(255 227 59 / 0.12);
+@media (max-height: 720px) and (min-width: 761px) {
+  .game-library {
+    padding-block: 3px 6px;
+  }
+
+  .game-library__content {
+    width: min(96vw, calc((100svh - 82px) * 1.985), 1625px);
+  }
+
+  .game-library__header {
+    margin-bottom: 4px;
+  }
+
+  .game-library__logo {
+    width: 30%;
+  }
+
+  .game-library__grid {
+    gap: 5px 6px;
+  }
 }
 
 @media (max-width: 760px) {
-  .illustrated-menu { padding: 4px 4px 64px; }
-  .illustrated-menu__link { border-radius: 10px; }
+  .game-library {
+    display: block;
+    height: 100svh;
+    padding: 10px 9px 24px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .game-library__content {
+    width: 100%;
+  }
+
+  .game-library__header {
+    position: sticky;
+    top: -10px;
+    z-index: 2;
+    margin: -10px -9px 9px;
+    padding: 10px 9px 7px;
+    background: #fffaf0;
+  }
+
+  .game-library__logo {
+    width: min(82%, 420px);
+    min-width: 0;
+  }
+
+  .game-library__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .game-card {
+    border-radius: 11px;
+  }
+
+  .game-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 390px) {
+  .game-library__grid {
+    gap: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card {
+    transition: none;
+  }
 }

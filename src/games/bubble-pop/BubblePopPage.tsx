@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { characters } from '../../content/characters'
 import { playCorrect } from '../../shared/sound'
 import './BubblePopPage.css'
+import { readStorage, writeStorage } from '../../shared/storage'
 
 type Bubble = {
   id: number
@@ -22,7 +23,7 @@ const TOTAL_KEY =
 
 function getSavedTotal() {
   const saved = Number(
-    window.localStorage.getItem(
+    readStorage(
       TOTAL_KEY,
     ),
   )
@@ -124,7 +125,7 @@ export default function BubblePopPage() {
     setTotal((current) => {
       const next = current + 1
 
-      window.localStorage.setItem(
+      writeStorage(
         TOTAL_KEY,
         String(next),
       )
